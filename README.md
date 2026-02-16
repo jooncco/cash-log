@@ -1,5 +1,5 @@
 # 💰 cash-log
-> 간단한 개인 재무 관리 애플리케이션, [AI-DLC(v0.1.3)](https://github.com/awslabs/aidlc-workflows) 기반
+> 간단한 개인 재무 관리 애플리케이션. Powered by [AI-DLC(v0.1.3)](https://github.com/awslabs/aidlc-workflows).
 
 ## ✨ 주요 기능
 
