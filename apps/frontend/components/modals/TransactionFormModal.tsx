@@ -40,22 +40,30 @@ export function TransactionFormModal() {
   }, []);
   
   useEffect(() => {
-    if (editingTransaction) {
-      const tagNames = editingTransaction.tags.map(t => t.name);
-      setSelectedTags(tagNames);
-      reset({
-        transactionDate: editingTransaction.transactionDate,
-        originalAmount: editingTransaction.originalAmount,
-        transactionType: editingTransaction.transactionType,
-        originalCurrency: editingTransaction.originalCurrency,
-        categoryId: editingTransaction.category?.id,
-        memo: editingTransaction.memo,
-        tagNames: tagNames,
-      });
-    } else {
-      setSelectedTags([]);
+    if (transactionModalOpen) {
+      if (editingTransaction) {
+        const tagNames = editingTransaction.tags.map(t => t.name);
+        setSelectedTags(tagNames);
+        reset({
+          transactionDate: editingTransaction.transactionDate,
+          originalAmount: editingTransaction.originalAmount,
+          transactionType: editingTransaction.transactionType,
+          originalCurrency: editingTransaction.originalCurrency,
+          categoryId: editingTransaction.category?.id,
+          memo: editingTransaction.memo,
+          tagNames: tagNames,
+        });
+      } else {
+        setSelectedTags([]);
+        reset({
+          transactionDate: new Date().toISOString().split('T')[0],
+          transactionType: 'EXPENSE',
+          originalCurrency: 'KRW',
+          tagNames: [],
+        });
+      }
     }
-  }, [editingTransaction, reset]);
+  }, [transactionModalOpen, editingTransaction, reset]);
   
   useEffect(() => {
     if (tagInput.trim()) {
@@ -99,6 +107,14 @@ export function TransactionFormModal() {
     return colors[Math.floor(Math.random() * colors.length)];
   };
   
+  const handleClose = () => {
+    closeTransactionModal();
+    reset();
+    setSelectedTags([]);
+    setTagInput('');
+    setShowSuggestions(false);
+  };
+
   const onSubmit = async (data: CreateTransactionRequest) => {
     try {
       const submitData = { ...data, tagNames: selectedTags };
@@ -107,10 +123,7 @@ export function TransactionFormModal() {
       } else {
         await addTransaction(submitData);
       }
-      closeTransactionModal();
-      reset();
-      setSelectedTags([]);
-      setTagInput('');
+      handleClose();
     } catch (error) {
       console.error('Failed to save transaction:', error);
     }
@@ -126,7 +139,7 @@ export function TransactionFormModal() {
             {editingTransaction ? t('editTransaction') : t('addTransaction')}
           </h2>
           <button
-            onClick={closeTransactionModal}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
             aria-label={t('cancel')}
           >

@@ -58,6 +58,11 @@ export default function TransactionsPage() {
     );
   }
   
+  // Sort by date descending (newest first)
+  filteredTransactions = filteredTransactions.sort((a, b) => 
+    b.transactionDate.localeCompare(a.transactionDate)
+  );
+  
   const clearFilters = () => {
     setStartDate('');
     setEndDate('');

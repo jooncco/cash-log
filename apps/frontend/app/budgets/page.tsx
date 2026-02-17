@@ -31,34 +31,36 @@ export default function BudgetsPage() {
   
   // Calculate budget progress
   const budgetsWithProgress = useMemo(() => {
-    return (budgets || []).map(budget => {
-      const period = `${budget.year}-${String(budget.month).padStart(2, '0')}`;
-      const budgetTransactions = (transactions || []).filter(t => {
-        const matchesPeriod = t.transactionDate.startsWith(period);
-        const isExpense = t.transactionType === 'EXPENSE';
-        return matchesPeriod && isExpense;
-      });
-      
-      const spent = budgetTransactions.reduce((sum, t) => sum + t.amountKrw, 0);
-      const remaining = budget.targetAmount - spent;
-      const percentage = (spent / budget.targetAmount) * 100;
-      
-      let status: 'safe' | 'warning' | 'danger' = 'safe';
-      if (percentage >= 100) {
-        status = 'danger';
-      } else if (percentage >= 80) {
-        status = 'warning';
-      }
-      
-      return {
-        ...budget,
-        period,
-        spent,
-        remaining,
-        percentage: Math.min(percentage, 100),
-        status,
-      };
-    });
+    return (budgets || [])
+      .map(budget => {
+        const period = `${budget.year}-${String(budget.month).padStart(2, '0')}`;
+        const budgetTransactions = (transactions || []).filter(t => {
+          const matchesPeriod = t.transactionDate.startsWith(period);
+          const isExpense = t.transactionType === 'EXPENSE';
+          return matchesPeriod && isExpense;
+        });
+        
+        const spent = budgetTransactions.reduce((sum, t) => sum + t.amountKrw, 0);
+        const remaining = budget.targetAmount - spent;
+        const percentage = (spent / budget.targetAmount) * 100;
+        
+        let status: 'safe' | 'warning' | 'danger' = 'safe';
+        if (percentage >= 100) {
+          status = 'danger';
+        } else if (percentage >= 80) {
+          status = 'warning';
+        }
+        
+        return {
+          ...budget,
+          period,
+          spent,
+          remaining,
+          percentage: Math.min(percentage, 100),
+          status,
+        };
+      })
+      .sort((a, b) => b.period.localeCompare(a.period)); // Sort by period descending
   }, [budgets, transactions]);
   
   if (loading) {

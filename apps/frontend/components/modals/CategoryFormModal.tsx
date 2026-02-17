@@ -33,6 +33,13 @@ export function CategoryFormModal() {
     setError('');
   }, [editingCategory, categoryModalOpen]);
   
+  const handleClose = () => {
+    closeCategoryModal();
+    setName('');
+    setSelectedColor(getRandomColor());
+    setError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -48,9 +55,7 @@ export function CategoryFormModal() {
       } else {
         await addCategory(submitData);
       }
-      closeCategoryModal();
-      setName('');
-      setError('');
+      handleClose();
     } catch (error) {
       console.error('Failed to save category:', error);
     }
@@ -66,7 +71,7 @@ export function CategoryFormModal() {
             {editingCategory ? t('editCategory') : t('addCategory')}
           </h2>
           <button
-            onClick={closeCategoryModal}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
             aria-label={t('cancel')}
           >

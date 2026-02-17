@@ -33,6 +33,11 @@ export default function DashboardPage() {
   
   const balance = totalIncome - totalExpense;
   
+  // Sort transactions by date descending (newest first)
+  const sortedTransactions = [...(transactions || [])].sort((a, b) => 
+    b.transactionDate.localeCompare(a.transactionDate)
+  );
+  
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">{t('dashboard')}</h1>
@@ -62,11 +67,11 @@ export default function DashboardPage() {
       
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-xl font-bold mb-4">{t('recentTransactions')}</h2>
-        {(transactions || []).length === 0 ? (
+        {sortedTransactions.length === 0 ? (
           <p className="text-gray-500 text-center py-8">{t('noTransactions')}</p>
         ) : (
           <div className="space-y-3">
-            {(transactions || []).slice(0, 5).map((transaction) => (
+            {sortedTransactions.slice(0, 5).map((transaction) => (
               <div
                 key={transaction.id}
                 className="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded"

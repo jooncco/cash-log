@@ -40,6 +40,15 @@ export function BudgetFormModal() {
     }
   }, [budgetModalOpen, editingBudget, reset]);
   
+  const handleClose = () => {
+    closeBudgetModal();
+    reset({
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      targetAmount: undefined,
+    });
+  };
+
   const onSubmit = async (data: CreateBudgetRequest) => {
     console.log('Form data:', data);
     console.log('Form errors:', errors);
@@ -50,8 +59,7 @@ export function BudgetFormModal() {
       } else {
         await addBudget(data);
       }
-      closeBudgetModal();
-      reset();
+      handleClose();
     } catch (error) {
       console.error('Failed to save budget:', error);
     }
@@ -62,7 +70,7 @@ export function BudgetFormModal() {
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={closeBudgetModal}
+      onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="budget-modal-title"
@@ -141,7 +149,7 @@ export function BudgetFormModal() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={closeBudgetModal}
+                onClick={handleClose}
                 className="flex-1"
                 data-testid="budget-cancel-button"
               >
