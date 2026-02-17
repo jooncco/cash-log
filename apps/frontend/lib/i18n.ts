@@ -67,6 +67,7 @@ export const translations = {
     topIncome: '상위 수입',
     topExpense: '상위 지출',
     noIncomeThisMonth: '수입 내역이 없습니다',
+    selectAtLeastOneCategory: '최소 1개 이상의 카테고리를 선택해주세요',
     
     // Tags
     createTag: '태그 생성',
@@ -197,6 +198,7 @@ export const translations = {
     topIncome: 'Top Income',
     topExpense: 'Top Expense',
     noIncomeThisMonth: 'No income this month',
+    selectAtLeastOneCategory: 'Please select at least one category',
     
     // Tags
     createTag: 'Create Tag',

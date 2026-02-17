@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -15,6 +16,7 @@ public class BudgetDTO {
     private Integer year;
     private Integer month;
     private BigDecimal targetAmount;
+    private Set<CategoryDTO> categories;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

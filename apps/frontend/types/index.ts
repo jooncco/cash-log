@@ -45,12 +45,14 @@ export interface Budget {
   year: number;
   month: number;
   targetAmount: number;
+  categories: Category[];
 }
 
 export interface CreateBudgetRequest {
   year: number;
   month: number;
   targetAmount: number;
+  categoryIds: number[];
 }
 
 // Tag types

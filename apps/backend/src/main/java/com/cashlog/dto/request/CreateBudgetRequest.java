@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -24,4 +25,8 @@ public class CreateBudgetRequest {
     @NotNull(message = "Target amount is required")
     @DecimalMin(value = "0.01", message = "Target amount must be greater than 0")
     private BigDecimal targetAmount;
+    
+    @NotNull(message = "Category IDs are required")
+    @NotEmpty(message = "At least one category must be selected")
+    private Set<Long> categoryIds;
 }

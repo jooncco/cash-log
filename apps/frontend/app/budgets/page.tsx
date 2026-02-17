@@ -34,10 +34,12 @@ export default function BudgetsPage() {
     return (budgets || [])
       .map(budget => {
         const period = `${budget.year}-${String(budget.month).padStart(2, '0')}`;
+        const categoryIds = (budget.categories || []).map(c => c.id);
         const budgetTransactions = (transactions || []).filter(t => {
           const matchesPeriod = t.transactionDate.startsWith(period);
           const isExpense = t.transactionType === 'EXPENSE';
-          return matchesPeriod && isExpense;
+          const matchesCategory = categoryIds.length === 0 || (t.category && categoryIds.includes(t.category.id));
+          return matchesPeriod && isExpense && matchesCategory;
         });
         
         const spent = budgetTransactions.reduce((sum, t) => sum + t.amountKrw, 0);
@@ -102,7 +104,13 @@ export default function BudgetsPage() {
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold">{budget.category}</h3>
+                  <div className="flex flex-wrap gap-2 mb-1">
+                    {(budget.categories || []).map(category => (
+                      <span key={category.id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {category.name}
+                      </span>
+                    ))}
+                  </div>
                   <p className="text-sm text-gray-500">{budget.period}</p>
                 </div>
                 <div className="flex space-x-2">

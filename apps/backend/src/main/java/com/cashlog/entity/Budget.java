@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "budget")
@@ -26,6 +28,15 @@ public class Budget {
     
     @Column(name = "target_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal targetAmount;
+    
+    @ManyToMany
+    @JoinTable(
+        name = "budget_category",
+        joinColumns = @JoinColumn(name = "budget_id"),
+        inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    @Builder.Default
+    private Set<Category> categories = new HashSet<>();
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

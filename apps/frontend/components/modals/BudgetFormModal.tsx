@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useUIStore } from '@/lib/stores/uiStore';
 import { useBudgetStore } from '@/lib/stores/budgetStore';
+import { useCategoryStore } from '@/lib/stores/categoryStore';
 import { useSessionStore } from '@/lib/stores/sessionStore';
 import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/Button';
@@ -13,10 +14,12 @@ import { CreateBudgetRequest } from '@/types';
 export function BudgetFormModal() {
   const { budgetModalOpen, editingBudget, closeBudgetModal } = useUIStore();
   const { addBudget, updateBudget } = useBudgetStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const { language } = useSessionStore();
   const t = useTranslation(language);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateBudgetRequest>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<Omit<CreateBudgetRequest, 'categoryIds'>>({
     defaultValues: {
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1,
@@ -25,18 +28,26 @@ export function BudgetFormModal() {
   });
   
   useEffect(() => {
+    if (budgetModalOpen) {
+      fetchCategories();
+    }
+  }, [budgetModalOpen]);
+  
+  useEffect(() => {
     if (budgetModalOpen && editingBudget) {
       reset({
         year: editingBudget.year,
         month: editingBudget.month,
         targetAmount: editingBudget.targetAmount,
       });
+      setSelectedCategories((editingBudget.categories || []).map(c => c.id));
     } else if (budgetModalOpen) {
       reset({ 
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
         targetAmount: undefined,
       });
+      setSelectedCategories([]);
     }
   }, [budgetModalOpen, editingBudget, reset]);
   
@@ -47,17 +58,24 @@ export function BudgetFormModal() {
       month: new Date().getMonth() + 1,
       targetAmount: undefined,
     });
+    setSelectedCategories([]);
   };
 
-  const onSubmit = async (data: CreateBudgetRequest) => {
-    console.log('Form data:', data);
-    console.log('Form errors:', errors);
+  const onSubmit = async (data: Omit<CreateBudgetRequest, 'categoryIds'>) => {
+    if (selectedCategories.length === 0) {
+      alert(t('selectAtLeastOneCategory'));
+      return;
+    }
     
     try {
+      const submitData: CreateBudgetRequest = {
+        ...data,
+        categoryIds: selectedCategories,
+      };
       if (editingBudget) {
-        await updateBudget(editingBudget.id, data);
+        await updateBudget(editingBudget.id, submitData);
       } else {
-        await addBudget(data);
+        await addBudget(submitData);
       }
       handleClose();
     } catch (error) {
@@ -142,6 +160,37 @@ export function BudgetFormModal() {
               />
               {errors.targetAmount && (
                 <p className="text-red-600 text-sm mt-1">{errors.targetAmount.message}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                카테고리 선택 (필수)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(categories || []).map(category => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => {
+                      if (selectedCategories.includes(category.id)) {
+                        setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                      } else {
+                        setSelectedCategories([...selectedCategories, category.id]);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                      selectedCategories.includes(category.id)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+              {selectedCategories.length === 0 && (
+                <p className="text-red-600 text-sm mt-1">최소 1개 이상의 카테고리를 선택해주세요</p>
               )}
             </div>
             
