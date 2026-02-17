@@ -40,6 +40,12 @@ public class BudgetService {
         return budgetMapper.toDTO(budget);
     }
     
+    public java.util.List<BudgetDTO> getAllBudgets() {
+        return budgetRepository.findAll().stream()
+                .map(budgetMapper::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
     @Transactional
     public BudgetDTO updateBudget(Long id, CreateBudgetRequest request) {
         Budget budget = budgetRepository.findById(id)

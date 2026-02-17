@@ -7,6 +7,7 @@ export interface Transaction {
   originalCurrency: string;
   conversionRate?: number;
   amountKrw: number;
+  category: Category | null;
   memo?: string;
   tags: Tag[];
   createdAt: string;
@@ -19,23 +20,37 @@ export interface CreateTransactionRequest {
   transactionType: 'INCOME' | 'EXPENSE';
   originalCurrency: string;
   conversionRate?: number;
+  categoryId: number;
   memo?: string;
-  tagIds: number[];
+  tagNames: string[];
+}
+
+// Category types
+export interface Category {
+  id: number;
+  name: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  color: string;
 }
 
 // Budget types
 export interface Budget {
   id: number;
-  amount: number;
-  period: string;
-  alertThreshold: number;
+  year: number;
+  month: number;
+  targetAmount: number;
 }
 
 export interface CreateBudgetRequest {
-  amount: number;
-  period: string;
-  alertThreshold: number;
-}
+  year: number;
+  month: number;
+  targetAmount: number;
 }
 
 // Tag types

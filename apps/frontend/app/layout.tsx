@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { TransactionFormModal } from '@/components/modals/TransactionFormModal';
 import { BudgetFormModal } from '@/components/modals/BudgetFormModal';
-import { TagFormModal } from '@/components/modals/TagFormModal';
+import { CategoryFormModal } from '@/components/modals/CategoryFormModal';
 import { ExportDialog } from '@/components/modals/ExportDialog';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 
@@ -58,7 +58,7 @@ export default function RootLayout({
         </main>
         <TransactionFormModal />
         <BudgetFormModal />
-        <TagFormModal />
+        <CategoryFormModal />
         <ExportDialog />
         <ConfirmDialog />
       </body>

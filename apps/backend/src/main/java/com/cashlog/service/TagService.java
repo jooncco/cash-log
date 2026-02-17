@@ -41,14 +41,22 @@ public class TagService {
     }
     
     @Transactional
-    public void deleteTag(Long id) {
+    public TagDTO updateTag(Long id, CreateTagRequest request) {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id));
         
-        if (!tag.getTransactions().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete tag that is in use");
-        }
+        tag.setName(request.getName());
+        tag.setColor(request.getColor());
         
+        Tag updated = tagRepository.save(tag);
+        return toDTO(updated);
+    }
+    
+    @Transactional
+    public void deleteTag(Long id) {
+        if (!tagRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Tag not found: " + id);
+        }
         tagRepository.deleteById(id);
     }
     

@@ -16,22 +16,34 @@ export function BudgetFormModal() {
   const { language } = useSessionStore();
   const t = useTranslation(language);
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateBudgetRequest>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateBudgetRequest>({
+    defaultValues: {
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      targetAmount: undefined,
+    },
+  });
   
   useEffect(() => {
     if (budgetModalOpen && editingBudget) {
       reset({
-        category: editingBudget.category,
-        amount: editingBudget.amount,
-        period: editingBudget.period,
-        alertThreshold: editingBudget.alertThreshold,
+        year: editingBudget.year,
+        month: editingBudget.month,
+        targetAmount: editingBudget.targetAmount,
       });
     } else if (budgetModalOpen) {
-      reset({ category: '', amount: 0, period: '', alertThreshold: 80 });
+      reset({ 
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+        targetAmount: undefined,
+      });
     }
   }, [budgetModalOpen, editingBudget, reset]);
   
   const onSubmit = async (data: CreateBudgetRequest) => {
+    console.log('Form data:', data);
+    console.log('Form errors:', errors);
+    
     try {
       if (editingBudget) {
         await updateBudget(editingBudget.id, data);
@@ -39,6 +51,7 @@ export function BudgetFormModal() {
         await addBudget(data);
       }
       closeBudgetModal();
+      reset();
     } catch (error) {
       console.error('Failed to save budget:', error);
     }
@@ -64,80 +77,63 @@ export function BudgetFormModal() {
           </h2>
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium mb-1">
-                {t('category')}
-              </label>
-              <Input
-                id="category"
-                data-testid="budget-category-input"
-                {...register('category', { required: t('categoryRequired') })}
-                placeholder={t('category')}
-                aria-required="true"
-                aria-invalid={errors.category ? 'true' : 'false'}
-              />
-              {errors.category && (
-                <p className="text-red-600 text-sm mt-1" role="alert">{errors.category.message}</p>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="year" className="block text-sm font-medium mb-1">
+                  연도
+                </label>
+                <Input
+                  id="year"
+                  type="number"
+                  {...register('year', { 
+                    required: '연도를 입력해주세요',
+                    valueAsNumber: true,
+                    min: { value: 2000, message: '2000년 이상이어야 합니다' }
+                  })}
+                  placeholder="2026"
+                />
+                {errors.year && (
+                  <p className="text-red-600 text-sm mt-1">{errors.year.message}</p>
+                )}
+              </div>
+              
+              <div>
+                <label htmlFor="month" className="block text-sm font-medium mb-1">
+                  월
+                </label>
+                <Input
+                  id="month"
+                  type="number"
+                  {...register('month', { 
+                    required: '월을 입력해주세요',
+                    valueAsNumber: true,
+                    min: { value: 1, message: '1-12 사이여야 합니다' },
+                    max: { value: 12, message: '1-12 사이여야 합니다' }
+                  })}
+                  placeholder="1"
+                />
+                {errors.month && (
+                  <p className="text-red-600 text-sm mt-1">{errors.month.message}</p>
+                )}
+              </div>
             </div>
             
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium mb-1">
+              <label htmlFor="targetAmount" className="block text-sm font-medium mb-1">
                 {t('amount')}
               </label>
               <Input
-                id="amount"
+                id="targetAmount"
                 type="number"
-                data-testid="budget-amount-input"
-                {...register('amount', { 
+                {...register('targetAmount', { 
                   required: t('amountRequired'),
+                  valueAsNumber: true,
                   min: { value: 1, message: 'Amount must be greater than 0' }
                 })}
                 placeholder={t('amount')}
-                aria-required="true"
-                aria-invalid={errors.amount ? 'true' : 'false'}
               />
-              {errors.amount && (
-                <p className="text-red-600 text-sm mt-1" role="alert">{errors.amount.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="period" className="block text-sm font-medium mb-1">
-                {t('period')}
-              </label>
-              <Input
-                id="period"
-                type="month"
-                data-testid="budget-period-input"
-                {...register('period', { required: 'Period is required' })}
-                aria-required="true"
-                aria-invalid={errors.period ? 'true' : 'false'}
-              />
-              {errors.period && (
-                <p className="text-red-600 text-sm mt-1" role="alert">{errors.period.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="alertThreshold" className="block text-sm font-medium mb-1">
-                {t('alertThreshold')} (%)
-              </label>
-              <Input
-                id="alertThreshold"
-                type="number"
-                data-testid="budget-threshold-input"
-                {...register('alertThreshold', { 
-                  required: 'Alert threshold is required',
-                  min: { value: 0, message: 'Must be at least 0' },
-                  max: { value: 100, message: 'Must be at most 100' }
-                })}
-                placeholder="80"
-                aria-required="true"
-                aria-invalid={errors.alertThreshold ? 'true' : 'false'}
-              />
-              {errors.alertThreshold && (
-                <p className="text-red-600 text-sm mt-1" role="alert">{errors.alertThreshold.message}</p>
+              {errors.targetAmount && (
+                <p className="text-red-600 text-sm mt-1">{errors.targetAmount.message}</p>
               )}
             </div>
             

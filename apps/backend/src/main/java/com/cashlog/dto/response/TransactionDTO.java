@@ -21,6 +21,7 @@ public class TransactionDTO {
     private String originalCurrency;
     private BigDecimal conversionRate;
     private BigDecimal amountKrw;
+    private CategoryDTO category;
     private String memo;
     private Set<TagDTO> tags;
     private LocalDateTime createdAt;

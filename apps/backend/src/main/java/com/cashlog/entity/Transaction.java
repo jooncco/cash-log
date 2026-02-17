@@ -40,10 +40,14 @@ public class Transaction {
     @Column(name = "amount_krw", nullable = false, precision = 15, scale = 2)
     private BigDecimal amountKrw;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+    
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
     
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "transaction_tag",
         joinColumns = @JoinColumn(name = "transaction_id"),

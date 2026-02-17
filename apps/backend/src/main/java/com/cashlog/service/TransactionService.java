@@ -2,11 +2,13 @@ package com.cashlog.service;
 
 import com.cashlog.dto.request.CreateTransactionRequest;
 import com.cashlog.dto.response.TransactionDTO;
+import com.cashlog.entity.Category;
 import com.cashlog.entity.Tag;
 import com.cashlog.entity.Transaction;
 import com.cashlog.entity.TransactionType;
 import com.cashlog.exception.ResourceNotFoundException;
 import com.cashlog.mapper.TransactionMapper;
+import com.cashlog.repository.CategoryRepository;
 import com.cashlog.repository.TagRepository;
 import com.cashlog.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final TagRepository tagRepository;
+    private final CategoryRepository categoryRepository;
     private final TransactionMapper transactionMapper;
     
     @Transactional
@@ -35,12 +38,18 @@ public class TransactionService {
                 request.getOriginalCurrency(), request.getConversionRate());
         
         Set<Tag> tags = new HashSet<>();
-        if (request.getTagIds() != null) {
-            tags = request.getTagIds().stream()
-                    .map(id -> tagRepository.findById(id)
-                            .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id)))
+        if (request.getTagNames() != null && !request.getTagNames().isEmpty()) {
+            tags = request.getTagNames().stream()
+                    .map(name -> tagRepository.findByName(name)
+                            .orElseGet(() -> tagRepository.save(Tag.builder()
+                                    .name(name)
+                                    .color(generateRandomColor())
+                                    .build())))
                     .collect(Collectors.toSet());
         }
+        
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryId()));
         
         Transaction transaction = Transaction.builder()
                 .transactionDate(request.getTransactionDate())
@@ -49,6 +58,7 @@ public class TransactionService {
                 .originalCurrency(request.getOriginalCurrency())
                 .conversionRate(request.getConversionRate())
                 .amountKrw(amountKrw)
+                .category(category)
                 .memo(request.getMemo())
                 .tags(tags)
                 .build();
@@ -84,12 +94,18 @@ public class TransactionService {
                 request.getOriginalCurrency(), request.getConversionRate());
         
         Set<Tag> tags = new HashSet<>();
-        if (request.getTagIds() != null) {
-            tags = request.getTagIds().stream()
-                    .map(tagId -> tagRepository.findById(tagId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + tagId)))
+        if (request.getTagNames() != null && !request.getTagNames().isEmpty()) {
+            tags = request.getTagNames().stream()
+                    .map(name -> tagRepository.findByName(name)
+                            .orElseGet(() -> tagRepository.save(Tag.builder()
+                                    .name(name)
+                                    .color(generateRandomColor())
+                                    .build())))
                     .collect(Collectors.toSet());
         }
+        
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryId()));
         
         transaction.setTransactionDate(request.getTransactionDate());
         transaction.setTransactionType(request.getTransactionType());
@@ -97,6 +113,7 @@ public class TransactionService {
         transaction.setOriginalCurrency(request.getOriginalCurrency());
         transaction.setConversionRate(request.getConversionRate());
         transaction.setAmountKrw(amountKrw);
+        transaction.setCategory(category);
         transaction.setMemo(request.getMemo());
         transaction.setTags(tags);
         
@@ -120,5 +137,15 @@ public class TransactionService {
             throw new IllegalArgumentException("Conversion rate required for non-KRW currency");
         }
         return originalAmount.multiply(conversionRate);
+    }
+    
+    private String generateRandomColor() {
+        String[] colors = {
+            "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", 
+            "#14B8A6", "#F97316", "#06B6D4", "#84CC16", "#F43F5E", "#A855F7",
+            "#22D3EE", "#FCD34D", "#FB923C", "#4ADE80", "#818CF8", "#F472B6",
+            "#2DD4BF", "#FDE047", "#FB7185", "#C084FC", "#38BDF8", "#BEF264"
+        };
+        return colors[(int) (Math.random() * colors.length)];
     }
 }

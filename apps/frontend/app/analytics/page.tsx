@@ -35,7 +35,6 @@ export default function AnalyticsPage() {
   const { language } = useSessionStore();
   const t = useTranslation(language);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   
   useEffect(() => {
     fetchTransactions();
@@ -49,16 +48,10 @@ export default function AnalyticsPage() {
     );
   }
   
-  // Filter transactions
-  let filteredTransactions = (transactions || []).filter(t => 
+  // Filter transactions by month
+  const filteredTransactions = (transactions || []).filter(t => 
     t.transactionDate.startsWith(selectedMonth)
   );
-  
-  if (selectedCategory) {
-    filteredTransactions = filteredTransactions.filter(t => 
-      t.tags.some(tag => tag.name === selectedCategory)
-    );
-  }
   
   const totalIncome = filteredTransactions
     .filter(t => t.transactionType === 'INCOME')
@@ -68,21 +61,28 @@ export default function AnalyticsPage() {
     .filter(t => t.transactionType === 'EXPENSE')
     .reduce((sum, t) => sum + t.amountKrw, 0);
   
-  // Tag breakdown
-  const tagBreakdown = filteredTransactions
+  // Top income transactions
+  const topIncome = filteredTransactions
+    .filter(t => t.transactionType === 'INCOME')
+    .sort((a, b) => b.amountKrw - a.amountKrw)
+    .slice(0, 5);
+  
+  // Top expense transactions
+  const topExpense = filteredTransactions
     .filter(t => t.transactionType === 'EXPENSE')
+    .sort((a, b) => b.amountKrw - a.amountKrw)
+    .slice(0, 5);
+  
+  // Category breakdown
+  const categoryBreakdown = filteredTransactions
+    .filter(t => t.transactionType === 'EXPENSE' && t.category !== null)
     .reduce((acc, t) => {
-      t.tags.forEach(tag => {
-        acc[tag.name] = (acc[tag.name] || 0) + t.amountKrw;
-      });
+      acc[t.category!.name] = (acc[t.category!.name] || 0) + t.amountKrw;
       return acc;
     }, {} as Record<string, number>);
   
-  const categories = Object.entries(tagBreakdown)
+  const categories = Object.entries(categoryBreakdown)
     .sort(([, a], [, b]) => b - a);
-  
-  // Get unique tags for filter
-  const allCategories = Array.from(new Set((transactions || []).flatMap(t => t.tags.map(tag => tag.name))));
   
   // Monthly trend data (last 6 months)
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
@@ -149,39 +149,20 @@ export default function AnalyticsPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">{t('analytics')}</h1>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div 
+          className="relative cursor-pointer"
+          onClick={(e) => {
+            const input = e.currentTarget.querySelector('input');
+            input?.showPicker?.();
+          }}
+        >
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 cursor-pointer min-w-[180px] text-center"
             data-testid="analytics-month-filter"
           />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 appearance-none bg-no-repeat bg-right"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-              backgroundPosition: 'right 0.75rem center',
-              backgroundSize: '12px',
-            }}
-            data-testid="analytics-category-filter"
-          >
-            <option value="">{t('selectCategory')}</option>
-            {allCategories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          {selectedCategory && (
-            <button
-              onClick={() => setSelectedCategory('')}
-              className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800"
-              data-testid="analytics-clear-filter"
-            >
-              {t('clearFilters')}
-            </button>
-          )}
         </div>
       </div>
       
@@ -202,6 +183,70 @@ export default function AnalyticsPage() {
           <p className="text-3xl font-bold text-red-600">
             ₩{totalExpense.toLocaleString()}
           </p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">{t('topIncome')}</h2>
+          {topIncome.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">{t('noIncomeThisMonth')}</p>
+          ) : (
+            <div className="space-y-3">
+              {topIncome.map((transaction, index) => (
+                <div key={transaction.id} className="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
+                    <div>
+                      <p className="font-medium">{transaction.category?.name}</p>
+                      <div className="flex gap-1 flex-wrap mt-1">
+                        {transaction.tags.map(tag => (
+                          <span key={tag.id} className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: tag.color + '20', color: tag.color }}>
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">{transaction.transactionDate}</p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-green-600">
+                    +₩{transaction.amountKrw.toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">{t('topExpense')}</h2>
+          {topExpense.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">{t('noExpensesThisMonth')}</p>
+          ) : (
+            <div className="space-y-3">
+              {topExpense.map((transaction, index) => (
+                <div key={transaction.id} className="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
+                    <div>
+                      <p className="font-medium">{transaction.category?.name}</p>
+                      <div className="flex gap-1 flex-wrap mt-1">
+                        {transaction.tags.map(tag => (
+                          <span key={tag.id} className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: tag.color + '20', color: tag.color }}>
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">{transaction.transactionDate}</p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-red-600">
+                    -₩{transaction.amountKrw.toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       
@@ -234,7 +279,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                       <div
-                        className="bg-primary-600 h-3 rounded-full transition-all"
+                        className="bg-blue-600 h-3 rounded-full transition-all"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>

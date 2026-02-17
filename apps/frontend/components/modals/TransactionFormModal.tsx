@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTransactionStore } from '@/lib/stores/transactionStore';
 import { useTagStore } from '@/lib/stores/tagStore';
+import { useCategoryStore } from '@/lib/stores/categoryStore';
 import { useSessionStore } from '@/lib/stores/sessionStore';
 import { useTranslation } from '@/lib/i18n';
 import { useUIStore } from '@/lib/stores/uiStore';
@@ -15,6 +16,7 @@ export function TransactionFormModal() {
   const { transactionModalOpen, editingTransaction, closeTransactionModal } = useUIStore();
   const { addTransaction, updateTransaction } = useTransactionStore();
   const { tags, fetchTags, addTag } = useTagStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const { language } = useSessionStore();
   const t = useTranslation(language);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -28,12 +30,13 @@ export function TransactionFormModal() {
       transactionDate: new Date().toISOString().split('T')[0],
       transactionType: 'EXPENSE',
       originalCurrency: 'KRW',
-      tagIds: [],
+      tagNames: [],
     },
   });
   
   useEffect(() => {
     fetchTags();
+    fetchCategories();
   }, []);
   
   useEffect(() => {
@@ -45,8 +48,9 @@ export function TransactionFormModal() {
         originalAmount: editingTransaction.originalAmount,
         transactionType: editingTransaction.transactionType,
         originalCurrency: editingTransaction.originalCurrency,
+        categoryId: editingTransaction.category?.id,
         memo: editingTransaction.memo,
-        tagIds: editingTransaction.tags.map(t => t.id),
+        tagNames: tagNames,
       });
     } else {
       setSelectedTags([]);
@@ -97,22 +101,7 @@ export function TransactionFormModal() {
   
   const onSubmit = async (data: CreateTransactionRequest) => {
     try {
-      // Create new tags and get their IDs
-      const tagIds: number[] = [];
-      for (const tagName of selectedTags) {
-        const existingTag = (tags || []).find(t => t.name === tagName);
-        if (existingTag) {
-          tagIds.push(existingTag.id);
-        } else {
-          // Create new tag
-          const newTag = await addTag({ name: tagName, color: getRandomColor() });
-          if (newTag) {
-            tagIds.push(newTag.id);
-          }
-        }
-      }
-      
-      const submitData = { ...data, tagIds };
+      const submitData = { ...data, tagNames: selectedTags };
       if (editingTransaction) {
         await updateTransaction(editingTransaction.id, submitData);
       } else {
@@ -202,6 +191,30 @@ export function TransactionFormModal() {
           </div>
           
           <div>
+            <label className="block text-sm font-medium mb-1">{t('category')}</label>
+            <select
+              {...register('categoryId', { 
+                required: t('categoryRequired'),
+                valueAsNumber: true 
+              })}
+              className="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 appearance-none bg-no-repeat bg-right"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '12px',
+              }}
+            >
+              <option value="">{t('selectCategory')}</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId.message}</p>}
+          </div>
+          
+          <div>
             <label className="block text-sm font-medium mb-1">{t('tags')}</label>
             <div className="relative">
               <input
@@ -211,7 +224,7 @@ export function TransactionFormModal() {
                 onCompositionStart={() => setIsComposing(true)}
                 onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={handleTagInputKeyDown}
-                placeholder={t('categoryPlaceholder')}
+                placeholder={t('tagPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
               />
               {showSuggestions && (

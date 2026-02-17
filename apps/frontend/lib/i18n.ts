@@ -21,7 +21,7 @@ export const translations = {
     editTransaction: '거래 수정',
     date: '날짜',
     tags: '태그',
-    categoryPlaceholder: '태그를 입력하고 엔터를 누르세요',
+    tagPlaceholder: '태그를 입력하고 엔터를 누르세요',
     type: '유형',
     amount: '금액',
     currency: '화폐',
@@ -35,7 +35,7 @@ export const translations = {
     dateRequired: '날짜를 입력해주세요',
     typeRequired: '유형을 선택해주세요',
     amountRequired: '금액을 입력해주세요',
-    categoryRequired: '태그를 입력해주세요',
+    tagRequired: '태그를 입력해주세요',
     
     // Budgets
     addBudget: '예산 추가',
@@ -61,9 +61,12 @@ export const translations = {
     noExpenses: '이번 달 지출이 없습니다',
     noExpensesThisMonth: '이번 달 지출 내역이 없습니다',
     monthlyTrend: '월별 추이',
-    categoryBreakdown: '태그별 분석',
+    categoryBreakdown: '카테고리별 분석',
     chart: '차트',
     noDataAvailable: '데이터가 없습니다',
+    topIncome: '상위 수입',
+    topExpense: '상위 지출',
+    noIncomeThisMonth: '수입 내역이 없습니다',
     
     // Tags
     createTag: '태그 생성',
@@ -71,6 +74,20 @@ export const translations = {
     tagColor: '태그 색상',
     colorPicker: '색상 선택',
     manageTags: '태그 관리',
+    noTags: '태그가 없습니다',
+    
+    // Categories
+    categories: '카테고리',
+    category: '카테고리',
+    addCategory: '카테고리 추가',
+    editCategory: '카테고리 수정',
+    categoryName: '카테고리 이름',
+    categoryNameRequired: '카테고리 이름을 입력해주세요',
+    categoryNamePlaceholder: '예: 식비, 교통비, 쇼핑',
+    categoryRequired: '카테고리를 선택해주세요',
+    noCategories: '카테고리가 없습니다',
+    selectCategory: '카테고리 선택',
+    color: '색상',
     
     // Export
     export: '내보내기',
@@ -88,7 +105,6 @@ export const translations = {
     dateRange: '기간',
     startDate: '시작일',
     endDate: '종료일',
-    selectCategory: '태그 선택',
     selectTags: '태그 선택',
     
     // Settings
@@ -98,6 +114,7 @@ export const translations = {
     
     // Common
     add: '추가',
+    create: '생성',
     edit: '수정',
     delete: '삭제',
     cancel: '취소',
@@ -110,6 +127,7 @@ export const translations = {
     deleteTransactionConfirm: '이 거래를 삭제하시겠습니까?',
     deleteBudgetConfirm: '이 예산을 삭제하시겠습니까?',
     deleteTagConfirm: '이 태그를 삭제하시겠습니까?',
+    deleteCategoryConfirm: '이 카테고리를 삭제하시겠습니까?',
   },
   en: {
     // Navigation
@@ -133,7 +151,7 @@ export const translations = {
     editTransaction: 'Edit Transaction',
     date: 'Date',
     tags: 'Tags',
-    categoryPlaceholder: 'Enter tag and press Enter',
+    tagPlaceholder: 'Enter tag and press Enter',
     type: 'Type',
     amount: 'Amount',
     currency: 'Currency',
@@ -147,7 +165,7 @@ export const translations = {
     dateRequired: 'Date is required',
     typeRequired: 'Type is required',
     amountRequired: 'Amount is required',
-    categoryRequired: 'Tag is required',
+    tagRequired: 'Tag is required',
     
     // Budgets
     addBudget: 'Add Budget',
@@ -173,9 +191,12 @@ export const translations = {
     noExpenses: 'No expenses this month',
     noExpensesThisMonth: 'No expenses this month',
     monthlyTrend: 'Monthly Trend',
-    categoryBreakdown: 'Tag Breakdown',
+    categoryBreakdown: 'Category Breakdown',
     chart: 'Chart',
     noDataAvailable: 'No data available',
+    topIncome: 'Top Income',
+    topExpense: 'Top Expense',
+    noIncomeThisMonth: 'No income this month',
     
     // Tags
     createTag: 'Create Tag',
@@ -183,6 +204,20 @@ export const translations = {
     tagColor: 'Tag Color',
     colorPicker: 'Color Picker',
     manageTags: 'Manage Tags',
+    noTags: 'No tags',
+    
+    // Categories
+    categories: 'Categories',
+    category: 'Category',
+    addCategory: 'Add Category',
+    editCategory: 'Edit Category',
+    categoryName: 'Category Name',
+    categoryNameRequired: 'Category name is required',
+    categoryNamePlaceholder: 'e.g., Food, Transport, Shopping',
+    categoryRequired: 'Category is required',
+    noCategories: 'No categories',
+    selectCategory: 'Select Category',
+    color: 'Color',
     
     // Export
     export: 'Export',
@@ -200,7 +235,6 @@ export const translations = {
     dateRange: 'Date Range',
     startDate: 'Start Date',
     endDate: 'End Date',
-    selectCategory: 'Select Tag',
     selectTags: 'Select Tags',
     
     // Settings
@@ -210,6 +244,7 @@ export const translations = {
     
     // Common
     add: 'Add',
+    create: 'Create',
     edit: 'Edit',
     delete: 'Delete',
     cancel: 'Cancel',
@@ -222,6 +257,7 @@ export const translations = {
     deleteTransactionConfirm: 'Are you sure you want to delete this transaction?',
     deleteBudgetConfirm: 'Are you sure you want to delete this budget?',
     deleteTagConfirm: 'Are you sure you want to delete this tag?',
+    deleteCategoryConfirm: 'Are you sure you want to delete this category?',
   },
 };
 

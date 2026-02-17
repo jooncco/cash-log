@@ -26,6 +26,13 @@ public class BudgetController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
     
+    @GetMapping
+    @Operation(summary = "Get all budgets")
+    public ResponseEntity<java.util.List<BudgetDTO>> getAllBudgets() {
+        java.util.List<BudgetDTO> budgets = budgetService.getAllBudgets();
+        return ResponseEntity.ok(budgets);
+    }
+    
     @GetMapping("/{year}/{month}")
     @Operation(summary = "Get budget by year and month")
     public ResponseEntity<BudgetDTO> getBudget(@PathVariable Integer year, @PathVariable Integer month) {

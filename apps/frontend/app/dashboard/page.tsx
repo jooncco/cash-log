@@ -72,7 +72,12 @@ export default function DashboardPage() {
                 className="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded"
               >
                 <div>
-                  <div className="flex gap-1 flex-wrap mb-1">
+                  <div className="flex gap-2 items-center mb-1">
+                    {transaction.category && (
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {transaction.category.name}
+                      </span>
+                    )}
                     {transaction.tags.map(tag => (
                       <span key={tag.id} className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: tag.color + '20', color: tag.color }}>
                         {tag.name}

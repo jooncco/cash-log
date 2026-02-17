@@ -33,7 +33,10 @@ public class CreateTransactionRequest {
     @DecimalMax(value = "10000", message = "Conversion rate must not exceed 10000")
     private BigDecimal conversionRate;
     
+    @NotNull(message = "Category is required")
+    private Long categoryId;
+    
     private String memo;
     
-    private Set<Long> tagIds;
+    private Set<String> tagNames;
 }
