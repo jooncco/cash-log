@@ -48,6 +48,35 @@
 
 ### 빠른 설정
 
+#### 방법 1: 자동 실행 스크립트 (권장)
+
+1. **저장소 클론**
+```bash
+git clone <repository-url>
+cd cash-log
+```
+
+2. **전체 애플리케이션 시작**
+```bash
+./start-app.sh
+```
+
+처음 실행 시 `.env` 파일 설정이 필요합니다:
+- `infrastructure/docker/.env` 파일을 편집하여 안전한 비밀번호 설정
+- 설정 후 `./start-app.sh`를 다시 실행
+
+3. **애플리케이션 종료**
+```bash
+./stop-app.sh
+```
+
+4. **애플리케이션 접속**
+- 프론트엔드: http://localhost:3000
+- 백엔드 API: http://localhost:8080
+- API 문서: http://localhost:8080/swagger-ui.html
+
+#### 방법 2: 수동 실행
+
 1. **저장소 클론**
 ```bash
 git clone <repository-url>

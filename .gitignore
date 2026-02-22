@@ -20,6 +20,12 @@ apps/frontend/.env.*.local
 *.log
 logs/
 
+# Application runtime files
+backend.log
+frontend.log
+backend.pid
+frontend.pid
+
 # Build artifacts
 target/
 build/
