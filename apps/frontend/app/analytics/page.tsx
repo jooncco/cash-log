@@ -5,6 +5,7 @@ import { useTransactionStore } from '@/lib/stores/transactionStore';
 import { useSessionStore } from '@/lib/stores/sessionStore';
 import { useTranslation } from '@/lib/i18n';
 import { Spinner } from '@/components/ui/Spinner';
+import { TransactionCalendar } from '@/components/analytics/TransactionCalendar';
 import { format, parse } from 'date-fns';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -165,6 +166,11 @@ export default function AnalyticsPage() {
           />
         </div>
       </div>
+      
+      <TransactionCalendar 
+        transactions={filteredTransactions}
+        selectedMonth={selectedMonth}
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
