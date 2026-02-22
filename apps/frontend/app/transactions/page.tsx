@@ -9,7 +9,7 @@ import { useTagStore } from '@/lib/stores/tagStore';
 import { useCategoryStore } from '@/lib/stores/categoryStore';
 import { Spinner } from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { Plus, Edit, Trash, Download } from 'lucide-react';
 
 export default function TransactionsPage() {
@@ -108,25 +108,16 @@ export default function TransactionsPage() {
       </div>
       
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">{t('startDate')}</label>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              data-testid="filter-start-date"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">{t('endDate')}</label>
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              data-testid="filter-end-date"
-            />
-          </div>
+        <div className="w-full sm:w-80">
+          <label className="block text-sm font-medium mb-1">{t('dateRange')}</label>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+            }}
+          />
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">{t('tags')}</label>
