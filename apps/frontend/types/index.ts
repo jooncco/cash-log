@@ -39,22 +39,6 @@ export interface CreateCategoryRequest {
   color: string;
 }
 
-// Budget types
-export interface Budget {
-  id: number;
-  year: number;
-  month: number;
-  targetAmount: number;
-  categories: Category[];
-}
-
-export interface CreateBudgetRequest {
-  year: number;
-  month: number;
-  targetAmount: number;
-  categoryIds: number[];
-}
-
 // Tag types
 export interface Tag {
   id: number;

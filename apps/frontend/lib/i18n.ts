@@ -3,7 +3,6 @@ export const translations = {
     // Navigation
     dashboard: '대시보드',
     transactions: '거래내역',
-    budgets: '예산',
     analytics: '분석',
     settings: '설정',
     
@@ -36,25 +35,6 @@ export const translations = {
     typeRequired: '유형을 선택해주세요',
     amountRequired: '금액을 입력해주세요',
     tagRequired: '태그를 입력해주세요',
-    
-    // Budgets
-    addBudget: '예산 추가',
-    editBudget: '예산 수정',
-    noBudgets: '예산이 설정되지 않았습니다',
-    setFirstBudget: '첫 예산을 설정하세요',
-    budget: '예산',
-    spent: '사용',
-    alertAt: '알림',
-    setBudget: '예산 설정',
-    category: '태그',
-    period: '기간',
-    alertThreshold: '알림 임계값',
-    monthlyBudget: '월간 예산',
-    yearlyBudget: '연간 예산',
-    budgetProgress: '예산 진행률',
-    remaining: '남은 금액',
-    overBudget: '예산 초과',
-    approachingLimit: '한도 근접',
     
     // Analytics
     expenseByTag: '태그별 지출',
@@ -126,7 +106,6 @@ export const translations = {
     // Dialogs
     confirmAction: '작업 확인',
     deleteTransactionConfirm: '이 거래를 삭제하시겠습니까?',
-    deleteBudgetConfirm: '이 예산을 삭제하시겠습니까?',
     deleteTagConfirm: '이 태그를 삭제하시겠습니까?',
     deleteCategoryConfirm: '이 카테고리를 삭제하시겠습니까?',
   },
@@ -134,7 +113,6 @@ export const translations = {
     // Navigation
     dashboard: 'Dashboard',
     transactions: 'Transactions',
-    budgets: 'Budgets',
     analytics: 'Analytics',
     settings: 'Settings',
     
@@ -167,25 +145,6 @@ export const translations = {
     typeRequired: 'Type is required',
     amountRequired: 'Amount is required',
     tagRequired: 'Tag is required',
-    
-    // Budgets
-    addBudget: 'Add Budget',
-    editBudget: 'Edit Budget',
-    noBudgets: 'No budgets set',
-    setFirstBudget: 'Set your first budget',
-    budget: 'Budget',
-    spent: 'spent',
-    alertAt: 'Alert at',
-    setBudget: 'Set Budget',
-    category: 'Tag',
-    period: 'Period',
-    alertThreshold: 'Alert Threshold',
-    monthlyBudget: 'Monthly Budget',
-    yearlyBudget: 'Yearly Budget',
-    budgetProgress: 'Budget Progress',
-    remaining: 'remaining',
-    overBudget: 'Over Budget',
-    approachingLimit: 'Approaching Limit',
     
     // Analytics
     expenseByTag: 'Expense by Tag',
@@ -257,7 +216,6 @@ export const translations = {
     // Dialogs
     confirmAction: 'Confirm Action',
     deleteTransactionConfirm: 'Are you sure you want to delete this transaction?',
-    deleteBudgetConfirm: 'Are you sure you want to delete this budget?',
     deleteTagConfirm: 'Are you sure you want to delete this tag?',
     deleteCategoryConfirm: 'Are you sure you want to delete this category?',
   },

@@ -34,8 +34,6 @@ export function Header() {
               <div className="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
               <div className="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
               <div className="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              <div className="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              <div className="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
             </nav>
           </div>
           <div className="flex items-center space-x-4">
@@ -63,12 +61,6 @@ export function Header() {
             </a>
             <a href="/transactions" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
               {t('transactions')}
-            </a>
-            <a href="/budgets" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
-              {t('budgets')}
-            </a>
-            <a href="/analytics" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
-              {t('analytics')}
             </a>
             <a href="/settings" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
               {t('settings')}

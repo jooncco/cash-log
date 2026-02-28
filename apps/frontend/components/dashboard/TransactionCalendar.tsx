@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Transaction } from '@/lib/types';
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameMonth, getDay } from 'date-fns';
+import { Transaction } from '@/types';
+import { startOfMonth, endOfMonth, eachDayOfInterval, format, getDay } from 'date-fns';
 
 interface TransactionCalendarProps {
   transactions: Transaction[];

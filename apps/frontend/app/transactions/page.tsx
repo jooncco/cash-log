@@ -140,7 +140,6 @@ export default function TransactionsPage() {
                 style={{
                   backgroundColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '40',
                   color: selectedTags.includes(tag.id) ? '#fff' : tag.color,
-                  ringColor: tag.color,
                 }}
                 data-testid={`tag-filter-${tag.id}`}
               >
@@ -170,7 +169,6 @@ export default function TransactionsPage() {
                 style={{
                   backgroundColor: selectedCategories.includes(category.id) ? category.color : category.color + '40',
                   color: selectedCategories.includes(category.id) ? '#fff' : category.color,
-                  ringColor: category.color,
                 }}
                 data-testid={`category-filter-${category.id}`}
               >

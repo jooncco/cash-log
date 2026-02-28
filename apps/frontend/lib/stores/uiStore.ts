@@ -1,17 +1,15 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Transaction, Budget, Tag, Category, Notification } from '@/types';
+import { Transaction, Tag, Category, Notification } from '@/types';
 
 interface UIState {
   transactionModalOpen: boolean;
-  budgetModalOpen: boolean;
   tagModalOpen: boolean;
   categoryModalOpen: boolean;
   exportDialogOpen: boolean;
   confirmDialogOpen: boolean;
   
   editingTransaction: Transaction | null;
-  editingBudget: Budget | null;
   editingTag: Tag | null;
   editingCategory: Category | null;
   confirmAction: (() => void) | null;
@@ -21,8 +19,6 @@ interface UIState {
   
   openTransactionModal: (transaction?: Transaction) => void;
   closeTransactionModal: () => void;
-  openBudgetModal: (budget?: Budget) => void;
-  closeBudgetModal: () => void;
   openTagModal: (tag?: Tag) => void;
   closeTagModal: () => void;
   openCategoryModal: (category?: Category) => void;
@@ -39,14 +35,12 @@ export const useUIStore = create<UIState>()(
   devtools(
     (set) => ({
       transactionModalOpen: false,
-      budgetModalOpen: false,
       tagModalOpen: false,
       categoryModalOpen: false,
       exportDialogOpen: false,
       confirmDialogOpen: false,
       
       editingTransaction: null,
-      editingBudget: null,
       editingTag: null,
       editingCategory: null,
       confirmAction: null,
@@ -58,11 +52,6 @@ export const useUIStore = create<UIState>()(
         set({ transactionModalOpen: true, editingTransaction: transaction || null }),
       closeTransactionModal: () =>
         set({ transactionModalOpen: false, editingTransaction: null }),
-      
-      openBudgetModal: (budget) =>
-        set({ budgetModalOpen: true, editingBudget: budget || null }),
-      closeBudgetModal: () =>
-        set({ budgetModalOpen: false, editingBudget: null }),
       
       openTagModal: (tag) =>
         set({ tagModalOpen: true, editingTag: tag || null }),

@@ -2,7 +2,6 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { TransactionFormModal } from '@/components/modals/TransactionFormModal';
-import { BudgetFormModal } from '@/components/modals/BudgetFormModal';
 import { CategoryFormModal } from '@/components/modals/CategoryFormModal';
 import { ExportDialog } from '@/components/modals/ExportDialog';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
@@ -57,7 +56,6 @@ export default function RootLayout({
           {children}
         </main>
         <TransactionFormModal />
-        <BudgetFormModal />
         <CategoryFormModal />
         <ExportDialog />
         <ConfirmDialog />

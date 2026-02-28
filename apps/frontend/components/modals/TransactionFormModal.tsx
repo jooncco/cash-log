@@ -30,6 +30,9 @@ export function TransactionFormModal() {
       transactionDate: new Date().toISOString().split('T')[0],
       transactionType: 'EXPENSE',
       originalCurrency: 'KRW',
+      originalAmount: undefined,
+      categoryId: undefined,
+      memo: '',
       tagNames: [],
     },
   });
@@ -55,12 +58,7 @@ export function TransactionFormModal() {
         });
       } else {
         setSelectedTags([]);
-        reset({
-          transactionDate: new Date().toISOString().split('T')[0],
-          transactionType: 'EXPENSE',
-          originalCurrency: 'KRW',
-          tagNames: [],
-        });
+        reset();
       }
     }
   }, [transactionModalOpen, editingTransaction, reset]);
