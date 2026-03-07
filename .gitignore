@@ -17,6 +17,8 @@ apps/frontend/.env.*.local
 
 # Database data and logs
 *.sql
+!apps/backend/src/main/resources/db/migration/*.sql
+!infrastructure/docker/mysql/*.sql
 *.log
 logs/
 
