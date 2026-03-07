@@ -98,7 +98,7 @@ export default function SettingsPage() {
         <div className="p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
-              {t('appearance')}
+              {t('theme')}
             </label>
             <div className="flex gap-4">
               <button

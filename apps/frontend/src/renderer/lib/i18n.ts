@@ -87,10 +87,24 @@ export const translations = {
     startDate: '시작일',
     endDate: '종료일',
     selectTags: '태그 선택',
+    selectDate: '날짜 선택',
+    selectStartDate: '시작일 선택',
+    selectEndDate: '종료일 선택',
+    clear: '초기화',
+    
+    // Days of week
+    sunday: '일',
+    monday: '월',
+    tuesday: '화',
+    wednesday: '수',
+    thursday: '목',
+    friday: '금',
+    saturday: '토',
     
     // Settings
     preferences: '환경설정',
     appearance: '외관',
+    theme: '테마',
     language: '언어',
     
     // Common
@@ -102,6 +116,11 @@ export const translations = {
     confirm: '확인',
     save: '저장',
     update: '업데이트',
+    
+    // Backend Status
+    connected: '연결됨',
+    connecting: '연결중...',
+    disconnected: '연결 끊김',
     
     // Dialogs
     confirmAction: '작업 확인',
@@ -197,10 +216,24 @@ export const translations = {
     startDate: 'Start Date',
     endDate: 'End Date',
     selectTags: 'Select Tags',
+    selectDate: 'Select Date',
+    selectStartDate: 'Select start date',
+    selectEndDate: 'Select end date',
+    clear: 'Clear',
+    
+    // Days of week
+    sunday: 'Su',
+    monday: 'Mo',
+    tuesday: 'Tu',
+    wednesday: 'We',
+    thursday: 'Th',
+    friday: 'Fr',
+    saturday: 'Sa',
     
     // Settings
     preferences: 'Preferences',
     appearance: 'Appearance',
+    theme: 'Theme',
     language: 'Language',
     
     // Common
@@ -212,6 +245,11 @@ export const translations = {
     confirm: 'Confirm',
     save: 'Save',
     update: 'Update',
+    
+    // Backend Status
+    connected: 'Connected',
+    connecting: 'Connecting...',
+    disconnected: 'Disconnected',
     
     // Dialogs
     confirmAction: 'Confirm Action',

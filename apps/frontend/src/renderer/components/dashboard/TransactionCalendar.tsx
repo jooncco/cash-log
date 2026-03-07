@@ -3,6 +3,8 @@
 import { useMemo } from 'react';
 import { Transaction } from '@/types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, getDay } from 'date-fns';
+import { useSessionStore } from '@/lib/stores/sessionStore';
+import { useTranslation } from '@/lib/i18n';
 
 interface TransactionCalendarProps {
   transactions: Transaction[];
@@ -10,6 +12,9 @@ interface TransactionCalendarProps {
 }
 
 export function TransactionCalendar({ transactions, selectedMonth }: TransactionCalendarProps) {
+  const { language } = useSessionStore();
+  const t = useTranslation(language);
+  
   const calendarData = useMemo(() => {
     const date = new Date(selectedMonth + '-01');
     const start = startOfMonth(date);
@@ -48,10 +53,20 @@ export function TransactionCalendar({ transactions, selectedMonth }: Transaction
   const firstDayOfWeek = getDay(new Date(selectedMonth + '-01'));
   const emptyDays = Array(firstDayOfWeek).fill(null);
   
+  const weekDays = [
+    t('sunday'),
+    t('monday'),
+    t('tuesday'),
+    t('wednesday'),
+    t('thursday'),
+    t('friday'),
+    t('saturday'),
+  ];
+  
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
       <div className="grid grid-cols-7 gap-2">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+        {weekDays.map(day => (
           <div key={day} className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400 py-2">
             {day}
           </div>

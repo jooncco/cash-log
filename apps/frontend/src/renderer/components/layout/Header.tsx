@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSessionStore } from '../../lib/stores/sessionStore';
 import { Moon, Sun } from 'lucide-react';
+import { BackendStatus } from '../BackendStatus';
+import { useTranslation } from '../../lib/i18n';
 
 type ViewType = 'dashboard' | 'transactions' | 'settings';
 
@@ -11,6 +13,7 @@ interface HeaderProps {
 
 export function Header({ currentView, onNavigate }: HeaderProps) {
   const { theme, language, setTheme, setLanguage } = useSessionStore();
+  const t = useTranslation(language);
   const [mounted, setMounted] = useState(false);
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   
@@ -33,31 +36,31 @@ export function Header({ currentView, onNavigate }: HeaderProps) {
               onClick={() => onNavigate('dashboard')}
               className={`px-3 py-1 rounded ${currentView === 'dashboard' ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
             >
-              Dashboard
+              {t('dashboard')}
             </button>
             <button
               onClick={() => onNavigate('transactions')}
               className={`px-3 py-1 rounded ${currentView === 'transactions' ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
             >
-              Transactions
+              {t('transactions')}
             </button>
             <button
               onClick={() => onNavigate('settings')}
               className={`px-3 py-1 rounded ${currentView === 'settings' ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
             >
-              Settings
+              {t('settings')}
             </button>
           </nav>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <button
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
           >
             {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
-          
+
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'ko' | 'en')}
@@ -66,6 +69,8 @@ export function Header({ currentView, onNavigate }: HeaderProps) {
             <option value="ko">한국어</option>
             <option value="en">English</option>
           </select>
+
+          <BackendStatus />
         </div>
       </div>
     </header>

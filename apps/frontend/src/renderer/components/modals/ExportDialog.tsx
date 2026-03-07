@@ -129,6 +129,7 @@ export function ExportDialog() {
                 onChange={(e) => setStartDate(e.target.value)}
                 data-testid="export-start-date"
                 aria-required="true"
+                placeholder={t('selectDate')}
               />
             </div>
             
@@ -143,6 +144,7 @@ export function ExportDialog() {
                 onChange={(e) => setEndDate(e.target.value)}
                 data-testid="export-end-date"
                 aria-required="true"
+                placeholder={t('selectDate')}
               />
             </div>
             

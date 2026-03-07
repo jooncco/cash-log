@@ -20,11 +20,6 @@ class Application {
   }
 
   async initialize() {
-    // Start backend services (DB + API)
-    if (process.env.AUTO_START_BACKEND !== 'false') {
-      await this.backendManager.start();
-    }
-
     // Register IPC handlers
     registerIPCHandlers(this.windowService, this.trayManager);
 
@@ -43,6 +38,13 @@ class Application {
       mainWindow.webContents.openDevTools();
     } else {
       mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    }
+
+    // Start backend services in background (non-blocking)
+    if (process.env.AUTO_START_BACKEND !== 'false') {
+      this.backendManager.start().catch(err => {
+        console.error('Failed to start backend:', err);
+      });
     }
   }
 

@@ -62,6 +62,9 @@ echo ""
 echo "📦 앱 빌드 중..."
 cd apps/frontend
 
+# Clean previous build artifacts
+rm -rf dist build release
+
 # Generate icon from logo.png
 echo "🎨 아이콘 생성 중..."
 mkdir -p build/icon.iconset
@@ -96,6 +99,9 @@ if [ ! -d "/Applications/Cash Log.app" ]; then
   echo "❌ 설치에 실패했습니다."
   exit 1
 fi
+
+# Clean up build artifacts
+rm -rf dist build release
 
 echo "✅ 설치 완료"
 echo ""

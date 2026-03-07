@@ -2,6 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { ElectronAPI } from './types';
 
 const electronAPI: ElectronAPI = {
+  config: {
+    get: () => ipcRenderer.invoke('config:get'),
+  },
   fileSystem: {
     saveFile: (data: any, format: 'csv' | 'excel' | 'pdf') =>
       ipcRenderer.invoke('file:save', data, format),

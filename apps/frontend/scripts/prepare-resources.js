@@ -66,6 +66,9 @@ console.log('✓ Created docker-compose.yml');
 
 // Create config.json
 const config = {
+  api: {
+    baseUrl: env.API_ENDPOINT || 'http://localhost:8080'
+  },
   db: {
     user: env.MYSQL_USER,
     password: env.MYSQL_PASSWORD,

@@ -110,14 +110,23 @@ export class BackendManager {
 
     while (Date.now() - startTime < maxWaitMs) {
       try {
-        execSync(`docker exec cashlog-mysql mysqladmin ping -h localhost -u root -p"${this.config.db.rootPassword}" 2>/dev/null`, {
-          stdio: 'pipe'
-        });
-        this.log('Database is ready');
-        return true;
+        // Check Docker container health status
+        const result = execSync('docker inspect --format="{{.State.Health.Status}}" cashlog-mysql', {
+          stdio: 'pipe',
+          encoding: 'utf-8',
+          env: { ...process.env, PATH: '/usr/local/bin:/usr/bin:/bin' }
+        }).trim();
+        
+        if (result === 'healthy') {
+          this.log('Database is ready');
+          return true;
+        }
+        
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        this.log(`Waiting for database... (${elapsed}s, status: ${result})`);
       } catch (error) {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        this.log(`Waiting for database... (${elapsed}s)`);
+        this.log(`Waiting for database... (${elapsed}s) - ${error instanceof Error ? error.message : 'unknown error'}`);
       }
       
       await new Promise(resolve => setTimeout(resolve, checkInterval));
@@ -164,7 +173,25 @@ export class BackendManager {
       return false;
     }
 
-    this.backendProcess = spawn('java', ['-jar', jarPath], {
+    // Find Java executable
+    let javaPath = 'java';
+    const commonPaths = [
+      '/opt/homebrew/opt/openjdk@21/bin/java',
+      '/opt/homebrew/bin/java',
+      '/usr/local/bin/java',
+      '/Library/Java/JavaVirtualMachines/openjdk.jdk/Contents/Home/bin/java'
+    ];
+    
+    for (const path of commonPaths) {
+      if (fs.existsSync(path)) {
+        javaPath = path;
+        break;
+      }
+    }
+    
+    this.log(`Using Java: ${javaPath}`);
+
+    this.backendProcess = spawn(javaPath, ['-jar', jarPath], {
       env: {
         ...process.env,
         DB_USER: this.config.db.user,

@@ -3,7 +3,23 @@ export interface TrayData {
   transactionCount: number;
 }
 
+export interface AppConfig {
+  api: {
+    baseUrl: string;
+  };
+  db: {
+    user: string;
+    password: string;
+    rootPassword: string;
+    database: string;
+    port: string;
+  };
+}
+
 export interface ElectronAPI {
+  config: {
+    get: () => Promise<AppConfig | null>;
+  };
   fileSystem: {
     saveFile: (data: any, format: 'csv' | 'excel' | 'pdf') => Promise<string | null>;
     openFile: () => Promise<string[] | null>;

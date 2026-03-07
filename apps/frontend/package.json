@@ -1,6 +1,8 @@
 {
   "name": "cashlog-desktop",
   "version": "1.0.0",
+  "description": "Simple personal finance management desktop application",
+  "author": "jooncco",
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {

@@ -7,6 +7,7 @@ import { useTranslation } from '../lib/i18n';
 import { Spinner } from '../components/ui/Spinner';
 import { TransactionCalendar } from '../components/dashboard/TransactionCalendar';
 import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -150,16 +151,16 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t('dashboard')}</h1>
-        <input
-          type="month"
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 cursor-pointer text-gray-900 dark:text-gray-100"
-          style={{
-            colorScheme: 'light dark'
-          }}
-          data-testid="dashboard-month-filter"
-        />
+        <div className="flex items-center gap-4">
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            lang={language}
+            className="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 cursor-pointer text-gray-900 dark:text-gray-100 dark:[color-scheme:dark]"
+            data-testid="dashboard-month-filter"
+          />
+        </div>
       </div>
       
       <TransactionCalendar 

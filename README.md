@@ -1,6 +1,17 @@
 # 💰 cash-log
 > 간단한 개인 재무 관리 **데스크톱 애플리케이션**. Electron + React 기반. Powered by [AI-DLC(v0.1.3)](https://github.com/awslabs/aidlc-workflows).
 
+## 📸 스크린샷
+
+### 대시보드
+![Dashboard](docs/images/dashboard.png)
+
+### 거래내역
+![Transactions](docs/images/transactions.png)
+
+### 설정
+![Settings](docs/images/settings.png)
+
 ## ✨ 주요 기능
 
 ### 1. 📅 수입/지출 내역 관리

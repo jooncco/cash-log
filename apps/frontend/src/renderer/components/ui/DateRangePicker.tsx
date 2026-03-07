@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, addMonths, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { useSessionStore } from '@/lib/stores/sessionStore';
+import { useTranslation } from '@/lib/i18n';
 
 interface DateRangePickerProps {
   startDate: string;
@@ -17,6 +19,8 @@ export function DateRangePicker({ startDate, endDate, onRangeChange }: DateRange
   const [tempStart, setTempStart] = useState<Date | null>(null);
   const [tempEnd, setTempEnd] = useState<Date | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { language } = useSessionStore();
+  const t = useTranslation(language);
   
   useEffect(() => {
     setTempStart(startDate ? new Date(startDate) : null);
@@ -75,7 +79,17 @@ export function DateRangePicker({ startDate, endDate, onRangeChange }: DateRange
     ? `${format(tempStart, 'yyyy-MM-dd')} ~ ${format(tempEnd, 'yyyy-MM-dd')}`
     : tempStart
     ? format(tempStart, 'yyyy-MM-dd')
-    : 'Select date range';
+    : t('selectDateRange');
+  
+  const weekDays = [
+    t('sunday'),
+    t('monday'),
+    t('tuesday'),
+    t('wednesday'),
+    t('thursday'),
+    t('friday'),
+    t('saturday'),
+  ];
   
   return (
     <div ref={containerRef} className="relative">
@@ -91,16 +105,16 @@ export function DateRangePicker({ startDate, endDate, onRangeChange }: DateRange
         <div className="absolute z-50 mt-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
-            <span className="font-semibold">{format(currentMonth, 'MMMM yyyy')}</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">{format(currentMonth, 'MMMM yyyy')}</span>
             <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
           </div>
           
           <div className="grid grid-cols-7 gap-1 mb-2">
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+            {weekDays.map(day => (
               <div key={day} className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 py-1">
                 {day}
               </div>
@@ -126,7 +140,7 @@ export function DateRangePicker({ startDate, endDate, onRangeChange }: DateRange
                     ${!isCurrentMonth ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : ''}
                     ${inRange ? 'bg-blue-100 dark:bg-blue-900' : ''}
                     ${isEnd ? 'bg-blue-600 text-white font-bold' : ''}
-                    ${!inRange && !isEnd && isCurrentMonth ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
+                    ${!inRange && !isEnd && isCurrentMonth ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100' : ''}
                   `}
                 >
                   {format(day, 'd')}
@@ -136,7 +150,7 @@ export function DateRangePicker({ startDate, endDate, onRangeChange }: DateRange
           </div>
           
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>{selectingStart ? 'Select start date' : 'Select end date'}</span>
+            <span>{selectingStart ? t('selectStartDate') : t('selectEndDate')}</span>
             <button
               onClick={() => {
                 setTempStart(null);
@@ -144,9 +158,9 @@ export function DateRangePicker({ startDate, endDate, onRangeChange }: DateRange
                 setSelectingStart(true);
                 onRangeChange('', '');
               }}
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Clear
+              {t('clear')}
             </button>
           </div>
         </div>
