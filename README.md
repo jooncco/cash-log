@@ -30,7 +30,34 @@
 
 ### 빠른 설정
 
-#### 방법 1: 자동 실행 스크립트 (권장)
+#### 방법 1: Mac 로컬에 설치 (권장)
+
+1. **앱 빌드 및 패키징**
+```bash
+cd apps/frontend
+npm run build
+npm run package:mac
+```
+
+2. **앱 설치**
+```bash
+# CLI로 설치
+sudo installer -pkg "release/Cash Log-1.0.0-universal.pkg" -target /
+
+# 또는 GUI로 설치
+open "release/Cash Log-1.0.0-universal.pkg"
+```
+
+3. **앱 실행**
+- Spotlight (Cmd + Space)에서 "Cash Log" 검색
+- Applications 폴더에서 실행
+- Launchpad에서 실행
+
+**참고**: 앱 실행 시 DB와 백엔드가 자동으로 시작됩니다. 별도의 스크립트 실행이 필요 없습니다.
+
+자세한 내용은 [데스크톱 앱 가이드](apps/frontend/QUICKSTART.md)를 참조하세요.
+
+#### 방법 2: 개발 모드 실행
 
 1. **저장소 클론**
 ```bash
@@ -57,7 +84,7 @@ cd cash-log
 - 백엔드 API: http://localhost:8080
 - API 문서: http://localhost:8080/swagger-ui.html
 
-#### 방법 2: 수동 실행
+#### 방법 3: 수동 실행 (개발자용)
 
 1. **저장소 클론**
 ```bash
@@ -86,39 +113,6 @@ cd apps/frontend
 npm install
 npm run dev
 ```
-
-#### 방법 3: Mac 로컬에 설치
-
-1. **앱 빌드 및 패키징**
-```bash
-cd apps/frontend
-npm run build
-npm run package:mac
-```
-
-2. **앱 설치**
-```bash
-# CLI로 설치
-sudo installer -pkg "release/Cash Log-1.0.0-universal.pkg" -target /
-
-# 또는 GUI로 설치
-open "release/Cash Log-1.0.0-universal.pkg"
-```
-
-3. **백엔드 및 DB 실행**
-```bash
-cd ../..
-./start-app.sh
-```
-
-4. **앱 실행**
-- Spotlight (Cmd + Space)에서 "Cash Log" 검색
-- Applications 폴더에서 실행
-- Launchpad에서 실행
-
-**참고**: Electron 앱은 프론트엔드만 포함하므로, 백엔드와 DB는 `./start-app.sh`로 별도 실행이 필요합니다.
-
-자세한 내용은 [데스크톱 앱 가이드](apps/frontend/QUICKSTART.md)를 참조하세요.
 
 ## 📁 프로젝트 구조
 

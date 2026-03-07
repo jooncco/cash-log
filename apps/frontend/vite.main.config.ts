@@ -20,6 +20,7 @@ export default defineConfig({
         'path',
         'fs',
         'fs/promises',
+        'child_process',
       ],
     },
   },

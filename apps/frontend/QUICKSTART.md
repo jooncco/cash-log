@@ -2,6 +2,32 @@
 
 ## 가장 빠른 방법 (권장)
 
+### 설치된 앱 사용
+
+```bash
+# 1. 앱 빌드 및 패키징
+cd apps/frontend
+npm run build
+npm run package:mac
+
+# 2. 앱 설치
+sudo installer -pkg "release/Cash Log-1.0.0-universal.pkg" -target /
+
+# 3. 앱 실행
+open -a "Cash Log"
+```
+
+**참고**: 
+- 설치된 앱은 실행 시 DB와 백엔드를 자동으로 시작합니다.
+- 앱 종료 시 DB와 백엔드도 자동으로 종료됩니다.
+- 별도의 스크립트 실행이 필요 없습니다.
+
+---
+
+## 개발 모드 실행
+
+### 방법 1: 자동 스크립트 (권장)
+
 ```bash
 ./start-app.sh
 ```
@@ -19,9 +45,9 @@
 
 ---
 
-## 수동 실행 방법
+### 방법 2: 수동 실행
 
-### 1. 백엔드 시작 (필수)
+#### 1. 백엔드 시작 (필수)
 
 먼저 Spring Boot 백엔드를 실행해야 합니다:
 
@@ -32,9 +58,9 @@ cd apps/backend
 
 백엔드가 `http://localhost:8080`에서 실행됩니다.
 
-### 2. 데스크톱 앱 실행
+#### 2. 데스크톱 앱 실행
 
-#### 방법 A: 개발 모드 (권장)
+**개발 모드 (권장)**
 
 ```bash
 cd apps/frontend
@@ -45,7 +71,7 @@ npm run dev
 - DevTools 자동 열림
 - 빠른 개발 사이클
 
-#### 방법 B: 빌드 후 실행
+**빌드 후 실행**
 
 ```bash
 cd apps/frontend
@@ -56,20 +82,25 @@ npm start
 - 프로덕션 빌드 테스트
 - 실제 앱과 동일한 환경
 
-### 3. PKG 인스톨러 생성
+---
+
+## 배포용 패키지 생성
+
+### PKG 인스톨러 생성
 
 ```bash
 cd apps/frontend
 npm run package:mac
 ```
 
-생성된 파일: `release/Cash Log-1.0.0.pkg`
+생성된 파일: `release/Cash Log-1.0.0-universal.pkg`
 
-### 4. 설치 및 실행
+### 설치 및 실행
 
 1. PKG 파일 더블클릭
 2. 설치 진행
 3. `/Applications/Cash Log.app` 실행
+4. DB와 백엔드가 자동으로 시작됨
 
 ## 문제 해결
 

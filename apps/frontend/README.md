@@ -29,6 +29,20 @@
 ./stop-app.sh   # 종료
 ```
 
+**또는 설치된 앱 사용:**
+```bash
+# 앱 빌드 및 설치
+cd apps/frontend
+npm run build
+npm run package:mac
+sudo installer -pkg "release/Cash Log-1.0.0-universal.pkg" -target /
+
+# 앱 실행 (DB와 백엔드 자동 시작)
+open -a "Cash Log"
+
+# 앱 종료 시 DB와 백엔드도 자동으로 종료됨
+```
+
 ### 수동 실행
 
 #### 1. Install Dependencies
