@@ -145,67 +145,59 @@ for i in {1..30}; do
 done
 echo ""
 
-# 5. 프론트엔드 설정 및 실행
-log_info "프론트엔드 애플리케이션 설정 중..."
+# 5. 데스크톱 앱 설정 및 실행
+log_info "데스크톱 애플리케이션 설정 중..."
 cd apps/frontend
 
-# .env.local 파일 확인 및 생성
-if [ ! -f ".env.local" ]; then
-    log_info ".env.local 파일 생성 중..."
-    echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > .env.local
-    log_success ".env.local 파일이 생성되었습니다."
+# .env 파일 확인 및 생성
+if [ ! -f ".env" ]; then
+    log_info ".env 파일 생성 중..."
+    echo "VITE_API_BASE_URL=http://localhost:8080" > .env
+    log_success ".env 파일이 생성되었습니다."
 fi
 
 # 의존성 설치 (node_modules가 없는 경우에만)
 if [ ! -d "node_modules" ]; then
-    log_info "프론트엔드 의존성 설치 중..."
+    log_info "데스크톱 앱 의존성 설치 중..."
     npm install
     log_success "의존성 설치 완료"
 fi
 
-# 프론트엔드를 백그라운드에서 실행
-log_info "프론트엔드 애플리케이션 시작 중..."
-nohup npm run dev > "$PROJECT_ROOT/frontend.log" 2>&1 &
-FRONTEND_PID=$!
-echo $FRONTEND_PID > "$PROJECT_ROOT/frontend.pid"
+# 데스크톱 앱을 백그라운드에서 실행
+log_info "데스크톱 애플리케이션 시작 중..."
+nohup npm run dev > "$PROJECT_ROOT/desktop.log" 2>&1 &
+DESKTOP_PID=$!
+echo $DESKTOP_PID > "$PROJECT_ROOT/desktop.pid"
 
-log_success "프론트엔드가 백그라운드에서 시작되었습니다 (PID: $FRONTEND_PID)"
-log_info "프론트엔드 로그: $PROJECT_ROOT/frontend.log"
+log_success "데스크톱 앱이 백그라운드에서 시작되었습니다 (PID: $DESKTOP_PID)"
+log_info "데스크톱 앱 로그: $PROJECT_ROOT/desktop.log"
 
 cd "$PROJECT_ROOT"
 echo ""
 
-# 프론트엔드가 준비될 때까지 대기
-log_info "프론트엔드 서버 준비 대기 중..."
-for i in {1..30}; do
-    if curl -s http://localhost:3000 > /dev/null 2>&1; then
-        log_success "프론트엔드 서버가 준비되었습니다."
-        break
-    fi
-    if [ $i -eq 30 ]; then
-        log_warning "프론트엔드 서버 시작 확인 실패. 로그를 확인하세요: $PROJECT_ROOT/frontend.log"
-    fi
-    sleep 2
-done
+# 데스크톱 앱이 준비될 때까지 대기
+log_info "데스크톱 앱 준비 대기 중..."
+sleep 5
+log_success "데스크톱 앱이 시작되었습니다."
 echo ""
 
 # 6. 완료 메시지
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_success "Cash Log 애플리케이션이 성공적으로 시작되었습니다! 🎉"
+log_success "Cash Log 데스크톱 애플리케이션이 성공적으로 시작되었습니다! 🎉"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "📱 애플리케이션 접속:"
-echo "   • 프론트엔드:  http://localhost:3000"
+echo "🖥️  애플리케이션 접속:"
+echo "   • 데스크톱 앱: Electron 창이 자동으로 열립니다"
 echo "   • 백엔드 API:  http://localhost:8080"
 echo "   • API 문서:    http://localhost:8080/swagger-ui.html"
 echo ""
 echo "📊 프로세스 정보:"
 echo "   • 백엔드 PID:  $BACKEND_PID"
-echo "   • 프론트엔드 PID: $FRONTEND_PID"
+echo "   • 데스크톱 앱 PID: $DESKTOP_PID"
 echo ""
 echo "📝 로그 파일:"
 echo "   • 백엔드:  $PROJECT_ROOT/backend.log"
-echo "   • 프론트엔드: $PROJECT_ROOT/frontend.log"
+echo "   • 데스크톱 앱: $PROJECT_ROOT/desktop.log"
 echo ""
 echo "🛑 애플리케이션 종료:"
 echo "   ./stop-app.sh"

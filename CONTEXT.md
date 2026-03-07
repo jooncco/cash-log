@@ -1,0 +1,1 @@
+Next.js 기반의 기존 frontend를 electron 기반의 데스크탑 앱으로 변경개발.

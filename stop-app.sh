@@ -34,28 +34,28 @@ PROJECT_ROOT=$(pwd)
 log_info "Cash Log 애플리케이션 종료 중..."
 echo ""
 
-# 1. 프론트엔드 종료
-if [ -f "$PROJECT_ROOT/frontend.pid" ]; then
-    FRONTEND_PID=$(cat "$PROJECT_ROOT/frontend.pid")
-    log_info "프론트엔드 종료 중 (PID: $FRONTEND_PID)..."
+# 1. 데스크톱 앱 종료
+if [ -f "$PROJECT_ROOT/desktop.pid" ]; then
+    DESKTOP_PID=$(cat "$PROJECT_ROOT/desktop.pid")
+    log_info "데스크톱 앱 종료 중 (PID: $DESKTOP_PID)..."
     
-    if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-        kill $FRONTEND_PID 2>/dev/null || true
+    if ps -p $DESKTOP_PID > /dev/null 2>&1; then
+        kill $DESKTOP_PID 2>/dev/null || true
         sleep 2
         
         # 강제 종료가 필요한 경우
-        if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-            kill -9 $FRONTEND_PID 2>/dev/null || true
+        if ps -p $DESKTOP_PID > /dev/null 2>&1; then
+            kill -9 $DESKTOP_PID 2>/dev/null || true
         fi
         
-        log_success "프론트엔드가 종료되었습니다."
+        log_success "데스크톱 앱이 종료되었습니다."
     else
-        log_warning "프론트엔드 프로세스가 이미 종료되었습니다."
+        log_warning "데스크톱 앱 프로세스가 이미 종료되었습니다."
     fi
     
-    rm -f "$PROJECT_ROOT/frontend.pid"
+    rm -f "$PROJECT_ROOT/desktop.pid"
 else
-    log_warning "frontend.pid 파일을 찾을 수 없습니다."
+    log_warning "desktop.pid 파일을 찾을 수 없습니다."
 fi
 echo ""
 
@@ -99,12 +99,12 @@ fi
 echo ""
 
 # 4. 로그 파일 정리 (선택사항)
-if [ -f "$PROJECT_ROOT/backend.log" ] || [ -f "$PROJECT_ROOT/frontend.log" ]; then
+if [ -f "$PROJECT_ROOT/backend.log" ] || [ -f "$PROJECT_ROOT/desktop.log" ]; then
     read -p "로그 파일을 삭제하시겠습니까? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         rm -f "$PROJECT_ROOT/backend.log"
-        rm -f "$PROJECT_ROOT/frontend.log"
+        rm -f "$PROJECT_ROOT/desktop.log"
         log_success "로그 파일이 삭제되었습니다."
     else
         log_info "로그 파일이 보존되었습니다."
@@ -114,7 +114,7 @@ echo ""
 
 # 5. 완료 메시지
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_success "Cash Log 애플리케이션이 종료되었습니다."
+log_success "Cash Log 데스크톱 애플리케이션이 종료되었습니다."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "🔄 애플리케이션 재시작:"

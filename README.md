@@ -1,5 +1,5 @@
 # 💰 cash-log
-> 간단한 개인 재무 관리 애플리케이션. Powered by [AI-DLC(v0.1.3)](https://github.com/awslabs/aidlc-workflows).
+> 간단한 개인 재무 관리 **데스크톱 애플리케이션**. Electron + React 기반. Powered by [AI-DLC(v0.1.3)](https://github.com/awslabs/aidlc-workflows).
 
 ## ✨ 주요 기능
 
@@ -44,7 +44,7 @@ cd cash-log
 ```
 
 처음 실행 시 `.env` 파일 설정이 필요합니다:
-- `infrastructure/docker/.env` 파일을 편집하여 안전한 비밀번호 설정
+- `infrastructure/docker/.env` 파일을 편집하여 비밀번호 설정
 - 설정 후 `./start-app.sh`를 다시 실행
 
 3. **애플리케이션 종료**
@@ -52,8 +52,8 @@ cd cash-log
 ./stop-app.sh
 ```
 
-4. **애플리케이션 접속**
-- 프론트엔드: http://localhost:3000
+4. **데스크톱 앱 접속**
+- Electron 창이 자동으로 열립니다
 - 백엔드 API: http://localhost:8080
 - API 문서: http://localhost:8080/swagger-ui.html
 
@@ -67,40 +67,58 @@ cd cash-log
 
 2. **인프라 설정 (데이터베이스)**
 ```bash
-# 초기 설정
 ./infrastructure/scripts/setup.sh
-
-# .env 파일을 편집하여 안전한 비밀번호 설정
-nano infrastructure/docker/.env
-
-# MySQL 데이터베이스 시작
+nano infrastructure/docker/.env  # 비밀번호 설정
 ./infrastructure/scripts/start.sh
 ```
 
-3. **백엔드 설정**
-```bash
-# 환경 변수 설정 (infrastructure/docker/.env와 동일한 비밀번호 사용)
-export DB_USER=cashlog
-export DB_PASSWORD=<your-secure-password>
-```
-
-4. **백엔드 실행**
+3. **백엔드 실행**
 ```bash
 cd apps/backend
+export DB_USER=cashlog
+export DB_PASSWORD=<your-password>
 ./mvnw spring-boot:run
 ```
 
-5. **프론트엔드 실행**
+4. **데스크톱 앱 실행**
 ```bash
 cd apps/frontend
 npm install
 npm run dev
 ```
 
-6. **애플리케이션 접속**
-- 프론트엔드: http://localhost:3000
-- 백엔드 API: http://localhost:8080
-- API 문서: http://localhost:8080/swagger-ui.html
+#### 방법 3: Mac 로컬에 설치
+
+1. **앱 빌드 및 패키징**
+```bash
+cd apps/frontend
+npm run build
+npm run package:mac
+```
+
+2. **앱 설치**
+```bash
+# CLI로 설치
+sudo installer -pkg "release/Cash Log-1.0.0-universal.pkg" -target /
+
+# 또는 GUI로 설치
+open "release/Cash Log-1.0.0-universal.pkg"
+```
+
+3. **백엔드 및 DB 실행**
+```bash
+cd ../..
+./start-app.sh
+```
+
+4. **앱 실행**
+- Spotlight (Cmd + Space)에서 "Cash Log" 검색
+- Applications 폴더에서 실행
+- Launchpad에서 실행
+
+**참고**: Electron 앱은 프론트엔드만 포함하므로, 백엔드와 DB는 `./start-app.sh`로 별도 실행이 필요합니다.
+
+자세한 내용은 [데스크톱 앱 가이드](apps/frontend/QUICKSTART.md)를 참조하세요.
 
 ## 📁 프로젝트 구조
 
@@ -108,21 +126,12 @@ npm run dev
 cash-log/
 ├── apps/
 │   ├── backend/          # Spring Boot 백엔드
-│   └── frontend/         # Next.js 프론트엔드
+│   └── frontend/         # Electron 데스크톱 앱
 ├── infrastructure/       # Docker 인프라
 │   ├── docker/          # Docker Compose 설정
 │   └── scripts/         # 설정 및 관리 스크립트
 └── aidlc-docs/          # AI-DLC 문서
 ```
-
-## 🔒 보안 주의사항
-
-⚠️ **중요**: 민감한 정보를 Git에 커밋하지 마세요!
-
-- `.env` 파일은 Git에서 무시됩니다
-- 항상 강력하고 고유한 비밀번호를 사용하세요
-- `infrastructure/docker/.env`의 기본 비밀번호를 변경하세요
-- 백엔드 실행 전 환경 변수를 설정하세요
 
 ## 📚 문서
 

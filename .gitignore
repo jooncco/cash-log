@@ -21,10 +21,14 @@ apps/frontend/.env.*.local
 logs/
 
 # Application runtime files
+*.log
+*.pid
 backend.log
 frontend.log
 backend.pid
 frontend.pid
+desktop.log
+desktop.pid
 
 # Build artifacts
 target/
@@ -32,6 +36,7 @@ build/
 dist/
 .next/
 out/
+release/
 
 # Dependencies
 node_modules/

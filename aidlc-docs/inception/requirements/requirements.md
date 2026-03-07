@@ -1,240 +1,212 @@
-# Requirements Document
+# Requirements Document - Electron Desktop App Migration
 
 ## Intent Analysis
 
 ### User Request
-"AI-DLC를 사용해서, frontend 의 나머지 기능을 구현하자."
-(Use AI-DLC to implement the remaining frontend features.)
+Migrate the existing Next.js-based frontend to an Electron-based desktop application.
 
 ### Request Type
-Enhancement - Completing partially implemented features in existing codebase
+**Migration** - Technology stack change from web (Next.js) to desktop (Electron)
 
 ### Scope Estimate
-Multiple Components - Changes across multiple frontend components and pages
+**System-wide** - Complete frontend transformation affecting all UI components and application structure
 
 ### Complexity Estimate
-Moderate - Multiple UI components with form handling, data visualization, and API integration
+**Complex** - Significant architectural changes, framework migration, desktop-specific features
 
 ---
 
 ## Functional Requirements
 
-### FR1: Budget Form Modal
-**Priority**: High  
-**Description**: Implement modal dialog for creating and editing budgets
+### FR1: Desktop Application Framework
+- **Description**: Transform apps/frontend from Next.js web app to Electron desktop app
+- **Details**:
+  - Remove Next.js framework completely
+  - Rebuild with React + Electron architecture
+  - Reuse existing React components where applicable
+  - Rebuild routing and application structure for desktop
+- **Priority**: High
 
-**Details**:
-- Fields: category (text input), amount (number input), period (month/year selector), alert threshold (percentage slider/input)
-- Validation: amount > 0, alert threshold 0-100%, required fields
-- Actions: Save (create/update), Cancel
-- Integration: Connect to existing budgetStore and budget API
-- Reuse: Follow pattern from TransactionFormModal
+### FR2: Backend Communication
+- **Description**: Maintain API communication with existing Spring Boot backend
+- **Details**:
+  - Direct API calls to Spring Boot backend (same as current web app)
+  - Reuse existing API client logic from apps/frontend/lib/api/
+  - Always-online mode (require backend connection)
+  - No local database or offline capabilities
+- **Priority**: High
 
-### FR2: Tag Management Modal
-**Priority**: High  
-**Description**: Implement modal dialog for managing tags
+### FR3: Component Reuse Strategy
+- **Description**: Reuse existing React components with desktop adaptations
+- **Details**:
+  - Reuse UI components from apps/frontend/components/
+  - Reuse Zustand stores from apps/frontend/lib/stores/
+  - Reuse type definitions from apps/frontend/types/
+  - Rebuild routing structure (remove Next.js App Router)
+  - Adapt components for desktop window management
+- **Priority**: High
 
-**Details**:
-- Create tag: name input + color picker
-- Edit tag: modify name and color
-- Delete tag: remove tag with confirmation
-- List tags: display all existing tags
-- Validation: unique tag names, valid hex color
-- Integration: Connect to existing tagStore and tag API
+### FR4: Desktop-Specific Features
+- **Description**: Implement native desktop functionality
+- **Details**:
+  - System tray integration for quick access
+  - Native desktop notifications
+  - File system access for import/export (CSV, Excel, PDF)
+  - Native file dialogs for save/open operations
+  - Menu bar integration (macOS native menus)
+- **Priority**: Medium
 
-### FR3: Export Dialog
-**Priority**: High  
-**Description**: Implement dialog for exporting transaction data
+### FR5: Single-User Desktop App
+- **Description**: Local-only authentication model
+- **Details**:
+  - No login/authentication required
+  - Single-user desktop application
+  - Remove authentication UI components
+  - Direct access to all features on app launch
+- **Priority**: High
 
-**Details**:
-- Format selection: CSV, Excel, PDF (radio buttons or dropdown)
-- Date range selection: start date and end date pickers
-- Export button: trigger download via export API
-- Integration: Connect to existing export API endpoints
-- File download: Handle browser download for different file types
-
-### FR4: Analytics Charts
-**Priority**: High  
-**Description**: Add data visualizations to analytics page
-
-**Details**:
-- Monthly trend line chart: Show income/expense over time
-- Category pie chart: Show expense distribution by category
-- Chart library: Use Chart.js (already installed)
-- Responsive: Charts should resize with viewport
-- Interactive: Tooltips showing exact values on hover
-- Data source: Use existing transaction data from store
-
-### FR5: Transaction Filtering
-**Priority**: Medium  
-**Description**: Add filtering capabilities to transactions page
-
-**Details**:
-- Date range filter: Start and end date pickers
-- Category filter: Dropdown or multi-select
-- Tag filter: Multi-select tag chips
-- Filter application: Real-time or on button click
-- Clear filters: Reset button to clear all filters
-- Integration: Filter data from transactionStore
-
-### FR6: Analytics Filtering
-**Priority**: Medium  
-**Description**: Add filtering capabilities to analytics page
-
-**Details**:
-- Date range filter: Start and end date pickers (already has month selector)
-- Category filter: Optional category selection
-- Apply filters to both charts and summary data
-- Integration: Filter data from transactionStore
-
-### FR7: Budget Progress Tracking
-**Priority**: Medium  
-**Description**: Display budget usage progress on budgets page
-
-**Details**:
-- Progress bar: Visual bar showing percentage used
-- Spent amount: Display current spending vs budget
-- Remaining amount: Show remaining budget
-- Color coding: Green (<80%), Yellow (80-100%), Red (>100%)
-- Alert indicator: Visual warning when threshold exceeded
-- Data calculation: Compare budget amount with actual expenses from transactions
-
-### FR8: Settings Page
-**Priority**: Low  
-**Description**: Implement settings page for user preferences
-
-**Details**:
-- Theme setting: Light/Dark mode toggle (already functional via header)
-- Language setting: Korean/English selector (already functional via header)
-- Additional settings: Placeholder for future preferences
-- Save preferences: Persist via session API
-- UI: Clean, organized settings layout
+### FR6: Core Feature Parity
+- **Description**: Maintain all existing features from web app
+- **Details**:
+  - Transaction management (CRUD operations)
+  - Budget tracking and management
+  - Tag system for categorization
+  - Analytics dashboard with charts
+  - Settings (theme, language preferences)
+  - Data export (CSV, Excel, PDF)
+- **Priority**: High
 
 ---
 
 ## Non-Functional Requirements
 
-### NFR1: Error Handling
-**Level**: Basic  
-**Description**: Simple validation and error messages
+### NFR1: Platform Support
+- **Description**: macOS-only desktop application
+- **Details**:
+  - Target platform: macOS (Intel + Apple Silicon)
+  - Minimum macOS version: 11.0 (Big Sur)
+  - Native macOS UI patterns and behaviors
+  - **Note**: Windows and Linux support explicitly excluded
+- **Priority**: High
 
-**Details**:
-- Form validation: Required fields, format validation
-- API error handling: Display error messages to user
-- User feedback: Toast notifications or inline error messages
-- Graceful degradation: Handle API failures without crashing
+### NFR2: Distribution Method
+- **Description**: Direct download distribution for personal use
+- **Details**:
+  - DMG installer for macOS
+  - No app store distribution
+  - No auto-update mechanism required
+  - Personal use only (not for public distribution)
+- **Priority**: Medium
 
-### NFR2: Responsive Design
-**Level**: Full mobile support  
-**Description**: All new components must be mobile-responsive
+### NFR3: Performance
+- **Description**: Desktop-optimized performance
+- **Details**:
+  - Fast application startup (< 3 seconds)
+  - Smooth UI interactions (60 FPS)
+  - Efficient memory usage (< 200MB idle)
+  - Quick backend API response handling
+- **Priority**: Medium
 
-**Details**:
-- Breakpoints: Follow Tailwind CSS responsive breakpoints
-- Mobile modals: Full-screen or bottom sheet on mobile
-- Touch-friendly: Adequate touch target sizes (44x44px minimum)
-- Charts: Responsive and readable on small screens
+### NFR4: Development Workflow
+- **Description**: Replace existing frontend project structure
+- **Details**:
+  - Transform apps/frontend into desktop-only app
+  - Remove Next.js dependencies completely
+  - Add Electron dependencies and configuration
+  - Maintain existing backend (apps/backend) unchanged
+  - Update build scripts for Electron packaging
+- **Priority**: High
 
-### NFR3: Accessibility
-**Level**: WCAG 2.1 Level AA  
-**Description**: Maintain accessibility standards for new components
-
-**Details**:
-- ARIA labels: All interactive elements properly labeled
-- Keyboard navigation: Full keyboard support for modals and forms
-- Focus management: Proper focus trapping in modals
-- Color contrast: Sufficient contrast ratios for text and UI elements
-- Screen reader support: Semantic HTML and ARIA attributes
-
-### NFR4: Internationalization
-**Level**: Full i18n support  
-**Description**: All new UI text supports Korean and English
-
-**Details**:
-- Translation keys: Add all new text to messages/ko.json and messages/en.json
-- Dynamic text: Use next-intl for all user-facing text
-- Date formatting: Locale-aware date formatting
-- Number formatting: Locale-aware number/currency formatting
-
-### NFR5: Performance
-**Level**: Maintain current performance  
-**Description**: New features should not degrade performance
-
-**Details**:
-- Chart rendering: Efficient rendering with Chart.js
-- Filtering: Optimize filter operations for large datasets
-- Bundle size: Keep additional dependencies minimal
-- Loading states: Show loading indicators for async operations
-
-### NFR6: Code Quality
-**Level**: Consistent with existing codebase  
-**Description**: Follow established patterns and conventions
-
-**Details**:
-- TypeScript: Full type safety for all new code
-- Component structure: Follow existing component patterns
-- State management: Use Zustand stores consistently
-- Styling: Use Tailwind CSS utility classes
-- Code formatting: Follow Prettier and ESLint rules
+### NFR5: Testing Strategy
+- **Description**: Unit testing with Jest
+- **Details**:
+  - Same testing approach as current web app
+  - Jest for unit tests
+  - React Testing Library for component tests
+  - No E2E testing required initially
+- **Priority**: Medium
 
 ---
 
 ## Technical Constraints
 
 ### TC1: Technology Stack
-- Must use existing technologies: React 18, Next.js 14, TypeScript, Tailwind CSS
-- Must use Chart.js for data visualization (already installed)
-- Must use existing state management (Zustand)
-- Must use existing form library (React Hook Form)
+- **Frontend Framework**: React 18 (remove Next.js)
+- **Desktop Framework**: Electron (latest stable)
+- **State Management**: Zustand (existing)
+- **Styling**: Tailwind CSS (existing)
+- **Build Tool**: Webpack or Vite (for Electron)
+- **Backend**: Spring Boot (unchanged)
+- **Database**: MySQL (unchanged)
 
-### TC2: API Integration
-- Must use existing backend API endpoints
-- Must follow existing API client patterns
-- No changes to backend API required
+### TC2: Architecture Constraints
+- **No web version**: Complete replacement, no parallel web deployment
+- **No offline mode**: Always require backend connection
+- **No authentication**: Single-user local app
+- **macOS only**: No cross-platform support needed
 
-### TC3: Browser Support
-- Chrome, Edge, Firefox, Safari (latest 2 versions)
-- Mobile browsers: iOS Safari, Chrome Mobile
+### TC3: Code Reuse Boundaries
+- **Reuse**: React components, Zustand stores, types, API clients, utilities
+- **Rebuild**: Routing, app structure, entry points, build configuration
+- **Remove**: Next.js-specific code (App Router, server components, SSR)
+
+---
+
+## User Scenarios
+
+### US1: Application Launch
+1. User double-clicks app icon
+2. App launches without login screen
+3. Main dashboard appears immediately
+4. System tray icon appears
+
+### US2: Transaction Management
+1. User clicks "Add Transaction" button
+2. Transaction form modal opens
+3. User fills in transaction details
+4. User clicks "Save"
+5. API call to backend saves transaction
+6. Transaction list updates
+7. Desktop notification confirms save
+
+### US3: Data Export
+1. User navigates to Transactions page
+2. User clicks "Export" button
+3. Native file dialog opens
+4. User selects save location and format (CSV/Excel/PDF)
+5. File is saved to selected location
+6. Desktop notification confirms export
+
+### US4: System Tray Interaction
+1. User clicks system tray icon
+2. Quick menu appears with options:
+   - Show/Hide main window
+   - Quick add transaction
+   - View today's summary
+   - Quit application
 
 ---
 
 ## Success Criteria
 
-### Completion Criteria
-- ✅ All 8 functional requirements implemented
-- ✅ All modals functional with proper validation
-- ✅ Charts displaying data correctly
-- ✅ Filtering working on transactions and analytics pages
-- ✅ Budget progress tracking showing accurate data
-- ✅ Settings page implemented
-- ✅ All new text translated to Korean and English
-- ✅ All components mobile-responsive
-- ✅ Accessibility standards maintained
-
-### Quality Criteria
-- No console errors or warnings
-- Forms validate correctly
-- API integration working
-- Charts render properly
-- Responsive design works on mobile
-- Accessibility features functional
-- Code follows existing patterns
+1. ✅ Electron app launches successfully on macOS
+2. ✅ All existing features work identically to web app
+3. ✅ Desktop-specific features implemented (tray, notifications, file access)
+4. ✅ No authentication required for single-user access
+5. ✅ React components successfully reused from web app
+6. ✅ Backend API integration works without changes
+7. ✅ DMG installer can be built and distributed
+8. ✅ App performs smoothly on macOS (< 3s startup, 60 FPS UI)
 
 ---
 
 ## Out of Scope
 
-The following are explicitly out of scope for this implementation:
-
-- Unit tests and integration tests
-- Backend API changes or new endpoints
-- Database schema changes
-- Performance optimization beyond basic practices
-- Advanced analytics features (forecasting, trends, etc.)
-- User authentication or authorization
-- Multi-user support
-- Data synchronization or offline support
-- Advanced filtering (saved filters, complex queries)
-- Bulk operations (bulk delete, bulk edit)
-- Transaction attachments or receipts
-- Recurring transactions
-- Budget templates or presets
+- ❌ Web version maintenance (complete replacement)
+- ❌ Windows and Linux support
+- ❌ App store distribution
+- ❌ Auto-update mechanism
+- ❌ Offline mode / local database
+- ❌ Multi-user authentication
+- ❌ Cloud sync features
+- ❌ Mobile app versions

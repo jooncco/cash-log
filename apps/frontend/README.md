@@ -1,153 +1,251 @@
-# Cash Log Frontend
+# Cash Log - Desktop App
 
-Personal finance tracking application built with Next.js 14, React 18, and TypeScript.
+> Electron-based desktop application for personal finance management. Built with React, TypeScript, and Electron.
 
-## Tech Stack
+## Features
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 3
-- **State Management**: Zustand 4
-- **Forms**: React Hook Form 7
-- **Charts**: Chart.js 4 + react-chartjs-2
-- **i18n**: next-intl 3
-- **Icons**: Lucide React
-- **PWA**: next-pwa
-- **Testing**: Jest + React Testing Library
+- 💰 Transaction management (income/expenses)
+- 📊 Budget tracking and analytics
+- 🏷️ Tag system for categorization
+- 📈 Visual charts and reports
+- 📤 Data export (CSV, Excel, PDF)
+- 🌓 Dark mode support
+- 🌍 Multi-language (Korean/English)
+- 🖥️ Native macOS integration
 
-## Getting Started
+## Requirements
 
-### Prerequisites
+- **macOS**: 11.0 (Big Sur) or later
+- **Node.js**: 18+ 
+- **Backend**: Spring Boot API running on localhost:8080
 
-- Node.js 20.x LTS
-- npm or yarn
+## Quick Start
 
-### Installation
+### 가장 빠른 방법 (권장)
+
+프로젝트 루트에서:
+```bash
+./start-app.sh  # 데이터베이스 + 백엔드 + 데스크톱 앱 시작
+./stop-app.sh   # 종료
+```
+
+### 수동 실행
+
+#### 1. Install Dependencies
 
 ```bash
-cd apps/frontend
 npm install
 ```
 
-### Development
+#### 2. Configure Environment
+
+Create `.env` file:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+#### 3. Start Backend
+
+Make sure the Spring Boot backend is running:
+
+```bash
+cd ../backend
+./mvnw spring-boot:run
+```
+
+#### 4. Run Development Mode
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+The app will launch with hot reload enabled for the renderer process.
 
-### Build
+## Build & Package
+
+### Build Application
 
 ```bash
 npm run build
-npm start
 ```
 
-### Testing
+This creates production builds in `dist/`:
+- `dist/main/` - Main process
+- `dist/preload/` - Preload script
+- `dist/renderer/` - Renderer process
+
+### Create PKG Installer
 
 ```bash
-npm test
-npm run test:watch
+npm run package:mac
 ```
 
-## Project Structure
+Output: `release/Cash Log-1.0.0.pkg`
+
+### Install & Run
+
+1. Double-click the PKG file
+2. Follow installation prompts
+3. App installs to `/Applications/Cash Log.app`
+4. Launch from Applications folder or Spotlight
+
+## Development
+
+### Project Structure
 
 ```
 apps/frontend/
-├── app/                    # Next.js App Router pages
-│   ├── dashboard/         # Dashboard page
-│   ├── transactions/      # Transactions page
-│   ├── budgets/          # Budgets page
-│   ├── analytics/        # Analytics page
-│   ├── settings/         # Settings page
-│   ├── layout.tsx        # Root layout
-│   ├── page.tsx          # Root page
-│   └── globals.css       # Global styles
-├── components/            # React components
-│   ├── ui/               # Reusable UI components
-│   ├── layout/           # Layout components
-│   ├── forms/            # Form components
-│   ├── charts/           # Chart components
-│   ├── modals/           # Modal components
-│   ├── skeletons/        # Skeleton loaders
-│   └── errors/           # Error components
-├── lib/                   # Utilities and libraries
-│   ├── api/              # API client and endpoints
-│   └── stores/           # Zustand stores
-├── hooks/                 # Custom React hooks
-├── types/                 # TypeScript type definitions
-├── messages/              # i18n translation files
-└── public/                # Static assets
-
-## Features
-
-### Implemented
-
-- ✅ Dashboard with summary cards
-- ✅ Transaction management (list, add, edit, delete)
-- ✅ Dark mode toggle
-- ✅ Language selection (Korean/English)
-- ✅ Responsive design (desktop-focused)
-- ✅ API integration with backend
-- ✅ State management with Zustand
-- ✅ Loading states and error handling
-
-### To Implement
-
-- Budget management
-- Analytics and charts
-- Tag management
-- Data export (CSV, Excel, PDF)
-- Offline support (PWA)
-- Comprehensive testing
-
-## Environment Variables
-
-Create `.env.local` file:
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:8080
+├── src/
+│   ├── main/              # Electron main process
+│   │   ├── index.ts       # Entry point
+│   │   ├── ipc-handlers.ts
+│   │   ├── services/      # Window, file system, notifications
+│   │   └── managers/      # System tray, native menu
+│   ├── preload/           # Preload script
+│   │   ├── index.ts       # Context bridge
+│   │   └── types.ts       # IPC API types
+│   └── renderer/          # React application
+│       ├── index.tsx      # React entry
+│       ├── App.tsx        # Root component
+│       ├── components/    # React components
+│       ├── pages/         # Page components
+│       ├── lib/           # Stores, API client
+│       └── services/      # IPC bridge
+├── build/                 # App icons
+├── vite.*.config.ts       # Vite configurations
+├── electron-builder.yml   # Packaging config
+└── package.json
 ```
 
-## API Integration
+### Scripts
 
-The frontend connects to the backend API at `http://localhost:8080`.
+```bash
+# Development
+npm run dev              # Start dev mode
+npm run dev:main         # Build main process only
+npm run dev:renderer     # Start renderer dev server
 
-Ensure the backend is running before starting the frontend.
+# Build
+npm run build            # Build all processes
+npm run build:main       # Build main process
+npm run build:preload    # Build preload script
+npm run build:renderer   # Build renderer
 
-## Accessibility
+# Package
+npm run package          # Package for current platform
+npm run package:mac      # Package for macOS
 
-- WCAG 2.1 Level AA compliant
-- Keyboard navigation support
-- Screen reader friendly
-- Focus management in modals
-- ARIA labels on interactive elements
+# Other
+npm run lint             # Lint code
+npm run test             # Run tests
+```
 
-## Performance
+### Hot Reload
 
-- Code splitting (route-level + component-level)
-- Lazy loading for heavy components
-- Image optimization with Next.js Image
-- Bundle size < 500KB gzipped
-- < 1s initial load time target
+- **Renderer process**: Full HMR with Vite
+- **Main process**: Requires manual restart
 
-## Browser Support
+### Debugging
 
-- Chrome (latest 2 versions)
-- Edge (latest 2 versions)
-- Firefox (latest 2 versions)
-- Safari (latest 2 versions)
+**Renderer Process**:
+- Open DevTools: `Cmd+Option+I` (in development)
+- Or from View menu → Toggle Developer Tools
 
-## Contributing
+**Main Process**:
+- Use VS Code debugger
+- Or add `console.log()` statements
 
-1. Follow the existing code patterns
-2. Use TypeScript for type safety
-3. Apply Tailwind CSS for styling
-4. Add data-testid attributes for testing
-5. Include ARIA labels for accessibility
-6. Write tests for new features
+## Desktop Features
+
+### System Tray
+
+Click the tray icon to:
+- View today's total and transaction count
+- Show/hide main window
+- Quit application
+
+### Native Menu
+
+- **Cash Log**: About, Hide, Quit
+- **Edit**: Undo, Redo, Cut, Copy, Paste
+- **Window**: Minimize, Zoom, Bring All to Front
+
+### Window Controls
+
+Custom title bar with:
+- Minimize button
+- Maximize/restore button
+- Close button
+
+### Notifications
+
+Native macOS notifications for:
+- Transaction saved
+- File exported
+- Errors and warnings
+
+### File Operations
+
+Native file dialogs for:
+- Export transactions (CSV, Excel, PDF)
+- Choose save location
+- Select files to import
+
+## Configuration
+
+### Environment Variables
+
+- `VITE_API_BASE_URL`: Backend API URL (default: `http://localhost:8080`)
+
+### User Preferences
+
+Stored in `~/Library/Application Support/cash-log-desktop/`:
+- Theme (light/dark)
+- Language (Korean/English)
+- Window size and position
+
+## Troubleshooting
+
+### App won't start
+
+1. Check backend is running: `curl http://localhost:8080`
+2. Check console for errors: `npm run dev`
+3. Clear cache: `rm -rf dist node_modules && npm install`
+
+### "Unidentified Developer" warning
+
+This app is not code-signed. To open:
+1. Right-click app → Open
+2. Click "Open" in dialog
+3. Or: System Preferences → Security & Privacy → Open Anyway
+
+### Hot reload not working
+
+- Renderer: Check Vite dev server is running on port 5173
+- Main: Restart the app manually
+
+### Build fails
+
+1. Check Node.js version: `node --version` (need 18+)
+2. Clean build: `rm -rf dist && npm run build`
+3. Check for TypeScript errors: `npx tsc --noEmit`
+
+## Tech Stack
+
+- **Electron**: 28.x (LTS)
+- **React**: 18.x
+- **TypeScript**: 5.x
+- **Vite**: 5.x
+- **Zustand**: 4.x (state management)
+- **Tailwind CSS**: 3.x
+- **Chart.js**: 4.x
+- **Axios**: 1.x
 
 ## License
 
-Private project
+MIT License - see [LICENSE](../../LICENSE) file
+
+## Support
+
+For issues or questions, please open an issue on GitHub.

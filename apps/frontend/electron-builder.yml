@@ -1,0 +1,18 @@
+appId: com.cashlog.app
+productName: Cash Log
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - package.json
+mac:
+  target:
+    - target: pkg
+      arch:
+        - universal
+  category: public.app-category.finance
+  icon: build/icon.icns
+  minimumSystemVersion: "11.0"
+pkg:
+  installLocation: /Applications
