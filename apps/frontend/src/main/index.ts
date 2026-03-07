@@ -72,6 +72,12 @@ app.on('before-quit', () => {
   }
 });
 
+app.on('will-quit', () => {
+  if (appInstance) {
+    appInstance.shutdown();
+  }
+});
+
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     appInstance = new Application();

@@ -3,158 +3,186 @@ import path from 'path';
 import { app } from 'electron';
 import fs from 'fs';
 
+interface Config {
+  db: {
+    user: string;
+    password: string;
+    rootPassword: string;
+    database: string;
+    port: string;
+  };
+}
+
 export class BackendManager {
   private dbProcess: ChildProcess | null = null;
   private backendProcess: ChildProcess | null = null;
-  private projectRoot: string;
-  private dbPassword: string = '';
+  private resourcesPath: string;
+  private config: Config;
+  private logPath: string;
 
   constructor() {
-    this.projectRoot = process.env.CASHLOG_PROJECT_ROOT || path.join(app.getPath('home'), 'workspace', 'cash-log');
-    this.loadEnvFile();
-    console.log(`[BackendManager] Project root: ${this.projectRoot}`);
+    this.resourcesPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'resources')
+      : path.join(__dirname, '../../build/resources');
+    
+    this.logPath = path.join(app.getPath('userData'), 'backend.log');
+    this.config = this.loadConfig();
+    this.log(`Resources path: ${this.resourcesPath}`);
   }
 
-  private loadEnvFile(): void {
-    const envPath = path.join(this.projectRoot, 'infrastructure', 'docker', '.env');
-    if (fs.existsSync(envPath)) {
-      const envContent = fs.readFileSync(envPath, 'utf-8');
-      const rootPasswordMatch = envContent.match(/MYSQL_ROOT_PASSWORD=(.+)/);
-      const passwordMatch = envContent.match(/MYSQL_PASSWORD=(.+)/);
-      
-      if (rootPasswordMatch) {
-        this.dbPassword = rootPasswordMatch[1].trim();
-        console.log('[BackendManager] DB root password loaded from .env');
-      } else if (passwordMatch) {
-        this.dbPassword = passwordMatch[1].trim();
-        console.log('[BackendManager] DB password loaded from .env');
-      }
+  private log(message: string): void {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}\n`;
+    console.log(message);
+    try {
+      fs.appendFileSync(this.logPath, logMessage);
+    } catch (error) {
+      console.error('Failed to write log:', error);
     }
+  }
+
+  private loadConfig(): Config {
+    const configPath = path.join(this.resourcesPath, 'config.json');
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      this.log('Config loaded');
+      return config;
+    }
+    throw new Error('Config file not found');
   }
 
   async startInfrastructure(): Promise<boolean> {
-    console.log('[BackendManager] Starting database...');
+    this.log('Starting database...');
     
-    const scriptPath = path.join(this.projectRoot, 'infrastructure', 'scripts', 'start.sh');
-    if (!fs.existsSync(scriptPath)) {
-      console.error(`[BackendManager] Script not found: ${scriptPath}`);
+    const dockerComposePath = this.resourcesPath;
+    if (!fs.existsSync(path.join(dockerComposePath, 'docker-compose.yml'))) {
+      this.log(`ERROR: docker-compose.yml not found at: ${dockerComposePath}`);
       return false;
     }
 
+    // Clean up any existing containers first
+    try {
+      execSync('/usr/local/bin/docker-compose down', {
+        cwd: dockerComposePath,
+        stdio: 'pipe'
+      });
+      this.log('Cleaned up existing containers');
+    } catch (error) {
+      this.log('No existing containers to clean up');
+    }
+
     return new Promise((resolve) => {
-      this.dbProcess = spawn('bash', [scriptPath], {
-        cwd: this.projectRoot,
+      this.dbProcess = spawn('/usr/local/bin/docker-compose', ['up', '-d'], {
+        cwd: dockerComposePath,
         stdio: 'pipe'
       });
 
       this.dbProcess.stdout?.on('data', (data) => {
-        console.log(`[DB] ${data.toString().trim()}`);
+        this.log(`[DB] ${data.toString().trim()}`);
       });
 
       this.dbProcess.stderr?.on('data', (data) => {
-        console.error(`[DB Error] ${data.toString().trim()}`);
+        this.log(`[DB Error] ${data.toString().trim()}`);
       });
 
       this.dbProcess.on('close', async (code) => {
         if (code === 0) {
-          console.log('[BackendManager] Start script completed, waiting for MySQL...');
+          this.log('Docker compose started, waiting for MySQL...');
           const ready = await this.waitForDatabase();
           resolve(ready);
         } else {
-          console.error(`[BackendManager] Start script failed with code ${code}`);
+          this.log(`ERROR: Docker compose failed with code ${code}`);
           resolve(false);
         }
       });
 
       this.dbProcess.on('error', (error) => {
-        console.error(`[BackendManager] DB process error: ${error}`);
+        this.log(`ERROR: DB process error: ${error}`);
         resolve(false);
       });
     });
   }
 
-  private async waitForDatabase(maxWaitMs: number = 30000): Promise<boolean> {
+  private async waitForDatabase(maxWaitMs: number = 90000): Promise<boolean> {
     const startTime = Date.now();
-    const checkInterval = 1000;
+    let checkInterval = 1000; // Start with 1 second
+    const maxInterval = 5000; // Max 5 seconds
 
     while (Date.now() - startTime < maxWaitMs) {
       try {
-        execSync('docker exec cashlog-mysql mysqladmin ping -h localhost -u root -p"' + this.dbPassword + '" 2>/dev/null', {
+        execSync(`docker exec cashlog-mysql mysqladmin ping -h localhost -u root -p"${this.config.db.rootPassword}" 2>/dev/null`, {
           stdio: 'pipe'
         });
-        console.log('[BackendManager] Database is ready');
+        this.log('Database is ready');
         return true;
       } catch (error) {
-        // Database not ready yet
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        this.log(`Waiting for database... (${elapsed}s)`);
       }
+      
       await new Promise(resolve => setTimeout(resolve, checkInterval));
+      // Exponential backoff: double the interval, up to maxInterval
+      checkInterval = Math.min(checkInterval * 2, maxInterval);
     }
 
-    console.error('[BackendManager] Database failed to start within timeout');
+    this.log('ERROR: Database failed to start within timeout');
     return false;
   }
 
-  private async waitForBackendReady(maxWaitMs: number = 60000): Promise<boolean> {
+  private async waitForBackendReady(maxWaitMs: number = 90000): Promise<boolean> {
     const startTime = Date.now();
-    const checkInterval = 1000;
+    let checkInterval = 1000; // Start with 1 second
+    const maxInterval = 5000; // Max 5 seconds
 
     while (Date.now() - startTime < maxWaitMs) {
       try {
         const response = await fetch('http://localhost:8080/actuator/health');
         if (response.ok) {
-          console.log('[BackendManager] Backend is ready');
+          this.log('Backend is ready');
           return true;
         }
       } catch (error) {
-        // Backend not ready yet, continue waiting
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        this.log(`Waiting for backend... (${elapsed}s)`);
       }
+      
       await new Promise(resolve => setTimeout(resolve, checkInterval));
+      // Exponential backoff: double the interval, up to maxInterval
+      checkInterval = Math.min(checkInterval * 2, maxInterval);
     }
 
-    console.error('[BackendManager] Backend failed to start within timeout');
+    this.log('ERROR: Backend failed to start within timeout');
     return false;
   }
 
   async startBackend(): Promise<boolean> {
-    console.log('[BackendManager] Starting backend...');
+    this.log('Starting backend...');
     
-    const backendPath = path.join(this.projectRoot, 'apps', 'backend');
-    if (!fs.existsSync(backendPath)) {
-      console.error(`[BackendManager] Backend path not found: ${backendPath}`);
+    const jarPath = path.join(this.resourcesPath, 'backend.jar');
+    if (!fs.existsSync(jarPath)) {
+      this.log(`ERROR: Backend JAR not found at: ${jarPath}`);
       return false;
     }
 
-    const envPath = path.join(this.projectRoot, 'infrastructure', 'docker', '.env');
-    let dbPassword = 'cashlog';
-    
-    if (fs.existsSync(envPath)) {
-      const envContent = fs.readFileSync(envPath, 'utf-8');
-      const match = envContent.match(/MYSQL_PASSWORD=(.+)/);
-      if (match) {
-        dbPassword = match[1].trim();
-      }
-    }
-
-    this.backendProcess = spawn('./mvnw', ['spring-boot:run'], {
-      cwd: backendPath,
+    this.backendProcess = spawn('java', ['-jar', jarPath], {
       env: {
         ...process.env,
-        DB_USER: 'cashlog',
-        DB_PASSWORD: dbPassword
+        DB_USER: this.config.db.user,
+        DB_PASSWORD: this.config.db.password
       },
       stdio: 'pipe'
     });
 
     this.backendProcess.stdout?.on('data', (data) => {
-      console.log(`[Backend] ${data.toString().trim()}`);
+      this.log(`[Backend] ${data.toString().trim()}`);
     });
 
     this.backendProcess.stderr?.on('data', (data) => {
-      console.error(`[Backend Error] ${data.toString().trim()}`);
+      this.log(`[Backend Error] ${data.toString().trim()}`);
     });
 
     this.backendProcess.on('error', (error) => {
-      console.error(`[BackendManager] Backend process error: ${error}`);
+      this.log(`ERROR: Backend process error: ${error}`);
     });
 
     return await this.waitForBackendReady();
@@ -162,36 +190,60 @@ export class BackendManager {
 
   async start(): Promise<void> {
     try {
-      await this.startInfrastructure();
-      await this.startBackend();
-      console.log('Backend services started successfully');
+      this.log('=== Starting backend services ===');
+      const dbStarted = await this.startInfrastructure();
+      if (!dbStarted) {
+        this.log('ERROR: Failed to start database');
+        return;
+      }
+      
+      const backendStarted = await this.startBackend();
+      if (!backendStarted) {
+        this.log('ERROR: Failed to start backend');
+        return;
+      }
+      
+      this.log('=== Backend services started successfully ===');
     } catch (error) {
-      console.error('Failed to start backend services:', error);
+      this.log(`ERROR: Failed to start backend services: ${error}`);
     }
   }
 
   stop(): void {
-    console.log('[BackendManager] Stopping backend services...');
+    this.log('Stopping backend services...');
     
     if (this.backendProcess) {
       this.backendProcess.kill('SIGTERM');
       this.backendProcess = null;
-      console.log('[BackendManager] Backend process terminated');
+      this.log('Backend process terminated');
     }
 
-    const dockerComposePath = path.join(this.projectRoot, 'infrastructure', 'docker');
-    if (fs.existsSync(dockerComposePath)) {
+    if (fs.existsSync(this.resourcesPath)) {
       try {
-        execSync('docker-compose down', {
-          cwd: dockerComposePath,
+        execSync('/usr/local/bin/docker-compose down', {
+          cwd: this.resourcesPath,
           stdio: 'inherit'
         });
-        console.log('[BackendManager] Docker containers stopped');
+        this.log('Docker containers stopped');
       } catch (error) {
-        console.error('[BackendManager] Failed to stop docker containers:', error);
+        this.log(`ERROR: Failed to stop docker containers: ${error}`);
       }
     }
     
     this.dbProcess = null;
+    
+    // Clean up log file
+    this.cleanupLog();
+  }
+
+  private cleanupLog(): void {
+    try {
+      if (fs.existsSync(this.logPath)) {
+        fs.unlinkSync(this.logPath);
+        console.log('Log file cleaned up');
+      }
+    } catch (error) {
+      console.error('Failed to clean up log file:', error);
+    }
   }
 }

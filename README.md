@@ -22,38 +22,86 @@
 ## 🚀 시작하기
 
 ### 사전 요구사항
-- **Docker** 20.10+
-- **Docker Compose** 2.0+
+- **macOS** 11.0 이상
+- **Docker Desktop** 20.10+
 - **Java** 21+
 - **Node.js** 18+
-- **Maven** 3.6+ (wrapper 포함)
 
-### 빠른 설정
+### 빠른 설치 (권장)
 
-#### 방법 1: Mac 로컬에 설치 (권장)
+```bash
+./install.sh
+```
 
-1. **앱 빌드 및 패키징**
+설치 스크립트가 자동으로:
+1. ✅ 필수 도구 확인 (Docker, Java, Node.js)
+2. ✅ 데이터베이스 설정 (.env 파일 생성)
+3. ✅ 백엔드 JAR 빌드
+4. ✅ 프론트엔드 빌드 및 패키징
+5. ✅ /Applications에 앱 설치
+6. ✅ 앱 자동 실행
+
+**처음 실행 시**: `.env` 파일 설정이 필요합니다.
+- `infrastructure/docker/.env` 파일을 편집하여 데이터베이스 비밀번호 설정
+- 설정 후 스크립트가 자동으로 진행됩니다
+
+**앱 실행 후**: 데이터베이스와 백엔드가 자동으로 시작됩니다 (10-20초 소요)
+
+### 수동 설치
+
+#### 방법 1: Mac 로컬에 설치
+
+1. **인프라 설정**
+```bash
+./infrastructure/scripts/setup.sh
+# infrastructure/docker/.env 파일을 편집하여 비밀번호 설정
+```
+
+2. **앱 빌드 및 패키징**
 ```bash
 cd apps/frontend
-npm run build
+npm install
 npm run package:mac
 ```
 
-2. **앱 설치**
+3. **앱 설치**
 ```bash
-# CLI로 설치
 sudo installer -pkg "release/Cash Log-1.0.0-universal.pkg" -target /
-
-# 또는 GUI로 설치
-open "release/Cash Log-1.0.0-universal.pkg"
 ```
 
-3. **앱 실행**
+4. **앱 실행**
 - Spotlight (Cmd + Space)에서 "Cash Log" 검색
 - Applications 폴더에서 실행
 - Launchpad에서 실행
 
 **참고**: 앱 실행 시 DB와 백엔드가 자동으로 시작됩니다. 별도의 스크립트 실행이 필요 없습니다.
+
+#### 앱 내부 구조
+
+앱 설치 후 다음과 같은 구조로 리소스가 포함됩니다:
+
+```
+/Applications/Cash Log.app/
+└── Contents/
+    └── Resources/
+        └── resources/
+            ├── backend.jar           # Spring Boot 백엔드
+            ├── docker-compose.yml    # MySQL 설정
+            └── config.json          # DB 연결 정보
+```
+
+#### 데이터 저장 위치
+
+- **앱 로그**: `~/Library/Application Support/cashlog-desktop/backend.log`
+- **데이터베이스**: Docker 볼륨 `docker_mysql-data`
+
+#### 문제 해결
+
+앱이 시작되지 않는 경우:
+1. Docker Desktop이 실행 중인지 확인
+2. 로그 파일 확인: `tail -f ~/Library/Application\ Support/cashlog-desktop/backend.log`
+3. Docker 컨테이너 확인: `docker ps | grep cashlog`
+4. 백엔드 상태 확인: `curl http://localhost:8080/actuator/health`
 
 자세한 내용은 [데스크톱 앱 가이드](apps/frontend/QUICKSTART.md)를 참조하세요.
 

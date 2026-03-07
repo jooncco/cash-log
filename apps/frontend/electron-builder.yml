@@ -6,6 +6,10 @@ directories:
 files:
   - dist/**/*
   - package.json
+  - build/resources/**/*
+extraResources:
+  - from: build/resources
+    to: resources
 mac:
   target:
     - target: pkg
