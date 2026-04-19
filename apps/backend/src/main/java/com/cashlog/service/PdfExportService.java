@@ -23,7 +23,7 @@ public class PdfExportService {
     private final TransactionRepository transactionRepository;
     
     public byte[] exportToPdf(LocalDate startDate, LocalDate endDate) {
-        List<Transaction> transactions = transactionRepository.findByTransactionDateBetween(startDate, endDate);
+        List<Transaction> transactions = transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate);
         
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(out);

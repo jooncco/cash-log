@@ -35,7 +35,7 @@ class TransactionRepositoryTest {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 1, 31);
         
-        List<Transaction> results = transactionRepository.findByTransactionDateBetween(startDate, endDate);
+        List<Transaction> results = transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate);
         
         assertFalse(results.isEmpty());
         assertEquals(1, results.size());

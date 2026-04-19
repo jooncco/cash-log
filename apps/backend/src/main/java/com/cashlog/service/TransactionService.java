@@ -74,13 +74,13 @@ public class TransactionService {
     }
     
     public List<TransactionDTO> getAllTransactions() {
-        return transactionRepository.findAll().stream()
+        return transactionRepository.findAllByOrderByTransactionDateDesc().stream()
                 .map(transactionMapper::toDTO)
                 .collect(Collectors.toList());
     }
     
     public List<TransactionDTO> getTransactionsByDateRange(LocalDate startDate, LocalDate endDate) {
-        return transactionRepository.findByTransactionDateBetween(startDate, endDate).stream()
+        return transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate).stream()
                 .map(transactionMapper::toDTO)
                 .collect(Collectors.toList());
     }

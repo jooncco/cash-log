@@ -17,13 +17,13 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     
     @EntityGraph(attributePaths = {"tags", "category"})
-    List<Transaction> findAll();
+    List<Transaction> findAllByOrderByTransactionDateDesc();
     
     @EntityGraph(attributePaths = {"tags", "category"})
     Optional<Transaction> findById(Long id);
     
     @EntityGraph(attributePaths = {"tags", "category"})
-    List<Transaction> findByTransactionDateBetween(LocalDate startDate, LocalDate endDate);
+    List<Transaction> findByTransactionDateBetweenOrderByTransactionDateDesc(LocalDate startDate, LocalDate endDate);
     
     @EntityGraph(attributePaths = {"tags", "category"})
     List<Transaction> findByTransactionType(TransactionType type);

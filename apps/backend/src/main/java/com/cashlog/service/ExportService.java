@@ -22,7 +22,7 @@ public class ExportService {
     private final TransactionRepository transactionRepository;
     
     public String exportToCsv(LocalDate startDate, LocalDate endDate) {
-        List<Transaction> transactions = transactionRepository.findByTransactionDateBetween(startDate, endDate);
+        List<Transaction> transactions = transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate);
         
         StringWriter writer = new StringWriter();
         try (CSVWriter csvWriter = new CSVWriter(writer)) {
@@ -47,7 +47,7 @@ public class ExportService {
     }
     
     public byte[] exportToExcel(LocalDate startDate, LocalDate endDate) {
-        List<Transaction> transactions = transactionRepository.findByTransactionDateBetween(startDate, endDate);
+        List<Transaction> transactions = transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate);
         
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Transactions");
