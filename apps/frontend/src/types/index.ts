@@ -87,8 +87,8 @@ export interface TransactionFilterParams {
   startDate?: string;
   endDate?: string;
   type?: 'INCOME' | 'EXPENSE';
-  categoryId?: number;
-  tagId?: number;
+  categoryIds?: number[];
+  tagIds?: number[];
   page?: number;
   size?: number;
 }

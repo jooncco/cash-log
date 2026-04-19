@@ -60,7 +60,7 @@ export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
 
   useEffect(() => {
-    setFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryId: undefined, tagId: undefined });
+    setFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined });
   }, [setFilters]);
 
   const monthTx = useMemo(

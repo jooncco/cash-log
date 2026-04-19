@@ -25,7 +25,7 @@ export default function TransactionsPage() {
   useEffect(() => {
     const startDate = searchParams.get('startDate') ?? undefined;
     const endDate = searchParams.get('endDate') ?? undefined;
-    setFilters({ startDate, endDate, type: undefined, categoryId: undefined, tagId: undefined });
+    setFilters({ startDate, endDate, type: undefined, categoryIds: undefined, tagIds: undefined });
     fetchCategories();
     fetchTags();
   }, [searchParams, setFilters, fetchCategories, fetchTags]);
@@ -50,7 +50,7 @@ export default function TransactionsPage() {
       <TransactionFilters
         filters={filters}
         onChange={(f) => setFilters(f)}
-        onClear={() => setFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryId: undefined, tagId: undefined })}
+        onClear={() => setFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined })}
         t={t}
       />
 

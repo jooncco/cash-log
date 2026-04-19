@@ -38,17 +38,31 @@ public class TransactionController {
     }
     
     @GetMapping
-    @Operation(summary = "Get all transactions or filter by date range")
+    @Operation(summary = "Get all transactions with optional filters")
     public ResponseEntity<List<TransactionDTO>> getTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) List<Long> categoryId,
+            @RequestParam(required = false) List<Long> tagId) {
         
+        List<TransactionDTO> transactions;
         if (startDate != null && endDate != null) {
-            List<TransactionDTO> transactions = transactionService.getTransactionsByDateRange(startDate, endDate);
-            return ResponseEntity.ok(transactions);
+            transactions = transactionService.getTransactionsByDateRange(startDate, endDate);
+        } else {
+            transactions = transactionService.getAllTransactions();
         }
-        
-        List<TransactionDTO> transactions = transactionService.getAllTransactions();
+
+        if (type != null) {
+            transactions = transactions.stream().filter(t -> t.getTransactionType().name().equals(type)).toList();
+        }
+        if (categoryId != null && !categoryId.isEmpty()) {
+            transactions = transactions.stream().filter(t -> t.getCategory() != null && categoryId.contains(t.getCategory().getId())).toList();
+        }
+        if (tagId != null && !tagId.isEmpty()) {
+            transactions = transactions.stream().filter(t -> t.getTags().stream().anyMatch(tag -> tagId.contains(tag.getId()))).toList();
+        }
+
         return ResponseEntity.ok(transactions);
     }
     
