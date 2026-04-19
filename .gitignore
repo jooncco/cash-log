@@ -1,80 +1,39 @@
-# Environment variables and secrets
+# Environment variables
 .env
 .env.local
 .env.*.local
-*.env
-
-# Infrastructure secrets
 infrastructure/docker/.env
-
-# Backend configuration with secrets
-apps/backend/.env
-apps/backend/src/main/resources/application-local.yml
-
-# Frontend environment files
-apps/frontend/.env.local
-apps/frontend/.env.*.local
-
-# Database data and logs
-*.sql
-!apps/backend/src/main/resources/db/migration/*.sql
-!infrastructure/docker/mysql/*.sql
-*.log
-logs/
-
-# Application runtime files
-*.log
-*.pid
-backend.log
-frontend.log
-backend.pid
-frontend.pid
-desktop.log
-desktop.pid
 
 # Build artifacts
 target/
-build/
 dist/
-.next/
-out/
-release/
+node_modules/
 
 # Dependencies
-node_modules/
 .pnp
 .pnp.js
 
 # Testing
 coverage/
-*.coverprofile
-.nyc_output
 
 # Editor/IDE
 .idea/
 .vscode/
 *.swp
-*.swo
 *~
-.DS_Store
 
 # OS files
+.DS_Store
 Thumbs.db
 
-# Go specific
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-go.work
-go.work.sum
+# Logs
+*.log
+logs/
 
 # Maven
 .mvn/wrapper/maven-wrapper.jar
 
-# Temporary files
+# Temporary
 tmp/
 temp/
+*.tsbuildinfo

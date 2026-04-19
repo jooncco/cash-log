@@ -1,9 +1,13 @@
-FROM eclipse-temurin:21-jre-alpine
-
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline -B
+COPY src/ src/
+RUN ./mvnw package -DskipTests -B
 
-COPY target/cashlog-backend-1.0.0.jar app.jar
-
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/cashlog-backend-*.jar app.jar
 EXPOSE 8080
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
