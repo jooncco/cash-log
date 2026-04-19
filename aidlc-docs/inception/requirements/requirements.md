@@ -1,212 +1,104 @@
-# Requirements Document - Electron Desktop App Migration
+# Requirements — Electron to Web Application Migration
 
 ## Intent Analysis
-
-### User Request
-Migrate the existing Next.js-based frontend to an Electron-based desktop application.
-
-### Request Type
-**Migration** - Technology stack change from web (Next.js) to desktop (Electron)
-
-### Scope Estimate
-**System-wide** - Complete frontend transformation affecting all UI components and application structure
-
-### Complexity Estimate
-**Complex** - Significant architectural changes, framework migration, desktop-specific features
+- **User Request**: Electron 기반 네이티브 데스크톱 앱을 Web Application으로 변경
+- **Request Type**: Migration
+- **Scope**: Multiple Components (프론트엔드 전체 재구성, 인프라 Docker Compose 통합)
+- **Complexity**: Complex
 
 ---
 
 ## Functional Requirements
 
-### FR1: Desktop Application Framework
-- **Description**: Transform apps/frontend from Next.js web app to Electron desktop app
-- **Details**:
-  - Remove Next.js framework completely
-  - Rebuild with React + Electron architecture
-  - Reuse existing React components where applicable
-  - Rebuild routing and application structure for desktop
-- **Priority**: High
+### FR-01: Vite + React SPA 웹 애플리케이션
+- 현재 Electron renderer에서 사용하는 Vite + React 구조를 순수 웹 SPA로 전환
+- 기존 코드를 참고하되 새로 작성
+- React Router 기반 클라이언트 사이드 라우팅 구현
+- 페이지: 대시보드, 거래내역, 설정
 
-### FR2: Backend Communication
-- **Description**: Maintain API communication with existing Spring Boot backend
-- **Details**:
-  - Direct API calls to Spring Boot backend (same as current web app)
-  - Reuse existing API client logic from apps/frontend/lib/api/
-  - Always-online mode (require backend connection)
-  - No local database or offline capabilities
-- **Priority**: High
+### FR-02: Electron 의존성 완전 제거
+- Electron 메인 프로세스 코드 제거 (`src/main/`)
+- Preload 스크립트 제거 (`src/preload/`)
+- IPC 통신 코드 제거
+- 시스템 트레이, 네이티브 메뉴 코드 제거
+- `electron`, `electron-builder`, `electron-store` 등 Electron 관련 의존성 제거
+- 백엔드 자동 시작 로직 제거 (BackendManager)
 
-### FR3: Component Reuse Strategy
-- **Description**: Reuse existing React components with desktop adaptations
-- **Details**:
-  - Reuse UI components from apps/frontend/components/
-  - Reuse Zustand stores from apps/frontend/lib/stores/
-  - Reuse type definitions from apps/frontend/types/
-  - Rebuild routing structure (remove Next.js App Router)
-  - Adapt components for desktop window management
-- **Priority**: High
+### FR-03: 거래 관리 기능 유지
+- 수입/지출 기록 (날짜, 금액, 카테고리, 태그, 메모)
+- 거래 목록 조회, 수정, 삭제
+- 기간별, 카테고리별, 태그별 필터링 및 검색
 
-### FR4: Desktop-Specific Features
-- **Description**: Implement native desktop functionality
-- **Details**:
-  - System tray integration for quick access
-  - Native desktop notifications
-  - File system access for import/export (CSV, Excel, PDF)
-  - Native file dialogs for save/open operations
-  - Menu bar integration (macOS native menus)
-- **Priority**: Medium
+### FR-04: 대시보드 및 데이터 시각화 유지
+- 월별 수입/지출 요약
+- 카테고리별 지출 분석 (파이 차트)
+- 월별 지출 추이 차트
+- Top 거래 내역
 
-### FR5: Single-User Desktop App
-- **Description**: Local-only authentication model
-- **Details**:
-  - No login/authentication required
-  - Single-user desktop application
-  - Remove authentication UI components
-  - Direct access to all features on app launch
-- **Priority**: High
+### FR-05: 데이터 내보내기 (브라우저 다운로드)
+- 백엔드 Export API를 통한 CSV, Excel, PDF 다운로드
+- 프론트엔드에서 Electron 파일 시스템 대신 브라우저 다운로드 API 사용
+- Electron 전용 내보내기 라이브러리 (exceljs, pdfkit, papaparse) 프론트엔드에서 제거
 
-### FR6: Core Feature Parity
-- **Description**: Maintain all existing features from web app
-- **Details**:
-  - Transaction management (CRUD operations)
-  - Budget tracking and management
-  - Tag system for categorization
-  - Analytics dashboard with charts
-  - Settings (theme, language preferences)
-  - Data export (CSV, Excel, PDF)
-- **Priority**: High
+### FR-06: 설정 기능 유지
+- 테마 선택 (라이트/다크 모드)
+- 언어 선택 (한국어/영어)
+- 세션 설정은 백엔드 Session API를 통해 저장
+
+### FR-07: 태그 관리 유지
+- 태그 생성, 수정, 삭제
+- 거래에 다중 태그 할당
+
+### FR-08: Docker Compose 통합 실행 환경
+- 프론트엔드(Nginx로 정적 파일 서빙) + 백엔드(Spring Boot) + DB(MySQL)를 Docker Compose로 통합
+- `docker compose up` 한 번으로 전체 스택 실행
+- 프론트엔드용 Dockerfile 추가 (빌드 → Nginx 서빙)
 
 ---
 
 ## Non-Functional Requirements
 
-### NFR1: Platform Support
-- **Description**: macOS-only desktop application
-- **Details**:
-  - Target platform: macOS (Intel + Apple Silicon)
-  - Minimum macOS version: 11.0 (Big Sur)
-  - Native macOS UI patterns and behaviors
-  - **Note**: Windows and Linux support explicitly excluded
-- **Priority**: High
+### NFR-01: 기존 백엔드 API 호환성
+- 백엔드 코드 변경 없음 (Spring Boot REST API 그대로 유지)
+- 프론트엔드는 기존 API 엔드포인트를 그대로 호출
 
-### NFR2: Distribution Method
-- **Description**: Direct download distribution for personal use
-- **Details**:
-  - DMG installer for macOS
-  - No app store distribution
-  - No auto-update mechanism required
-  - Personal use only (not for public distribution)
-- **Priority**: Medium
+### NFR-02: 반응형 웹 디자인
+- 데스크톱 및 모바일 브라우저 지원
+- TailwindCSS 기반 반응형 레이아웃
 
-### NFR3: Performance
-- **Description**: Desktop-optimized performance
-- **Details**:
-  - Fast application startup (< 3 seconds)
-  - Smooth UI interactions (60 FPS)
-  - Efficient memory usage (< 200MB idle)
-  - Quick backend API response handling
-- **Priority**: Medium
+### NFR-03: 국제화 (i18n)
+- 한국어/영어 지원 유지
+- 브라우저 환경에 맞는 i18n 라이브러리 사용
 
-### NFR4: Development Workflow
-- **Description**: Replace existing frontend project structure
-- **Details**:
-  - Transform apps/frontend into desktop-only app
-  - Remove Next.js dependencies completely
-  - Add Electron dependencies and configuration
-  - Maintain existing backend (apps/backend) unchanged
-  - Update build scripts for Electron packaging
-- **Priority**: High
+### NFR-04: 상태 관리
+- Zustand 기반 클라이언트 상태 관리 유지
 
-### NFR5: Testing Strategy
-- **Description**: Unit testing with Jest
-- **Details**:
-  - Same testing approach as current web app
-  - Jest for unit tests
-  - React Testing Library for component tests
-  - No E2E testing required initially
-- **Priority**: Medium
+### NFR-05: 보안
+- Security Extension 규칙 적용 (SECURITY-01 ~ 전체)
+- HTTPS 통신, CORS 설정, 입력 검증
 
----
-
-## Technical Constraints
-
-### TC1: Technology Stack
-- **Frontend Framework**: React 18 (remove Next.js)
-- **Desktop Framework**: Electron (latest stable)
-- **State Management**: Zustand (existing)
-- **Styling**: Tailwind CSS (existing)
-- **Build Tool**: Webpack or Vite (for Electron)
-- **Backend**: Spring Boot (unchanged)
-- **Database**: MySQL (unchanged)
-
-### TC2: Architecture Constraints
-- **No web version**: Complete replacement, no parallel web deployment
-- **No offline mode**: Always require backend connection
-- **No authentication**: Single-user local app
-- **macOS only**: No cross-platform support needed
-
-### TC3: Code Reuse Boundaries
-- **Reuse**: React components, Zustand stores, types, API clients, utilities
-- **Rebuild**: Routing, app structure, entry points, build configuration
-- **Remove**: Next.js-specific code (App Router, server components, SSR)
-
----
-
-## User Scenarios
-
-### US1: Application Launch
-1. User double-clicks app icon
-2. App launches without login screen
-3. Main dashboard appears immediately
-4. System tray icon appears
-
-### US2: Transaction Management
-1. User clicks "Add Transaction" button
-2. Transaction form modal opens
-3. User fills in transaction details
-4. User clicks "Save"
-5. API call to backend saves transaction
-6. Transaction list updates
-7. Desktop notification confirms save
-
-### US3: Data Export
-1. User navigates to Transactions page
-2. User clicks "Export" button
-3. Native file dialog opens
-4. User selects save location and format (CSV/Excel/PDF)
-5. File is saved to selected location
-6. Desktop notification confirms export
-
-### US4: System Tray Interaction
-1. User clicks system tray icon
-2. Quick menu appears with options:
-   - Show/Hide main window
-   - Quick add transaction
-   - View today's summary
-   - Quit application
-
----
-
-## Success Criteria
-
-1. ✅ Electron app launches successfully on macOS
-2. ✅ All existing features work identically to web app
-3. ✅ Desktop-specific features implemented (tray, notifications, file access)
-4. ✅ No authentication required for single-user access
-5. ✅ React components successfully reused from web app
-6. ✅ Backend API integration works without changes
-7. ✅ DMG installer can be built and distributed
-8. ✅ App performs smoothly on macOS (< 3s startup, 60 FPS UI)
+### NFR-06: 테스트
+- Property-Based Testing 규칙 적용 (PBT-01 ~ 전체)
+- Jest + React Testing Library 기반 프론트엔드 테스트
+- 비즈니스 로직에 대한 PBT 테스트 포함
 
 ---
 
 ## Out of Scope
+- 백엔드 코드 변경 (API, 비즈니스 로직, DB 스키마)
+- 사용자 인증/인가 (현재 미구현, 이번 마이그레이션 범위 외)
+- 클라우드 배포 (Docker Compose 로컬 실행까지만)
+- PWA (Progressive Web App) 기능
 
-- ❌ Web version maintenance (complete replacement)
-- ❌ Windows and Linux support
-- ❌ App store distribution
-- ❌ Auto-update mechanism
-- ❌ Offline mode / local database
-- ❌ Multi-user authentication
-- ❌ Cloud sync features
-- ❌ Mobile app versions
+---
+
+## Technical Decisions
+- **프레임워크**: Vite + React (SPA)
+- **라우팅**: React Router
+- **상태 관리**: Zustand
+- **스타일링**: TailwindCSS
+- **차트**: Chart.js + react-chartjs-2
+- **HTTP 클라이언트**: Axios
+- **빌드 도구**: Vite
+- **컨테이너화**: Docker + Nginx (프론트엔드 서빙)
+- **오케스트레이션**: Docker Compose (프론트엔드 + 백엔드 + MySQL)

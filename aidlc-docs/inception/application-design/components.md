@@ -1,276 +1,69 @@
-# Application Components
+# Components
 
-## Component Overview
+## Page Components
 
-The Electron desktop application consists of two main process types with distinct component responsibilities:
+### DashboardPage
+- **Purpose**: 월별 수입/지출 요약, 카테고리 분석 차트, 최근 거래 표시
+- **Responsibilities**: 월 선택, 요약 데이터 로드, 차트 렌더링, 최근 거래 목록 표시
 
-### Main Process Components
-Components running in the Electron main process, handling native OS integrations.
+### TransactionsPage
+- **Purpose**: 거래 내역 CRUD 및 필터링/검색
+- **Responsibilities**: 거래 목록 표시, 필터링 (기간/카테고리/태그), 거래 추가/수정/삭제 모달 트리거, 페이지네이션
 
-### Renderer Process Components
-Components running in the browser context, handling UI and user interactions.
+### SettingsPage
+- **Purpose**: 사용자 설정 (테마, 언어), 데이터 내보내기
+- **Responsibilities**: 테마 토글, 언어 선택, 카테고리 관리, 내보내기 다이얼로그 트리거
 
----
+## Layout Components
 
-## Main Process Components
+### AppLayout
+- **Purpose**: 전체 앱 레이아웃 쉘 (헤더 + 콘텐츠 영역)
+- **Responsibilities**: 라우팅 outlet 제공, 테마 적용, 글로벌 모달 렌더링
 
-### 1. Application Manager
-**Purpose**: Core application lifecycle and window management
+### Header
+- **Purpose**: 상단 네비게이션 바
+- **Responsibilities**: 페이지 간 네비게이션 (React Router Link), 현재 페이지 하이라이트
 
-**Responsibilities**:
-- Initialize Electron application
-- Create and manage main application window
-- Handle application lifecycle events (ready, quit, activate)
-- Manage window state (minimize, maximize, close)
+## Domain Components
 
-**Interfaces**:
-- `createWindow()`: Create main application window
-- `handleWindowEvents()`: Handle window lifecycle events
-- `quit()`: Clean shutdown of application
+### TransactionFormModal
+- **Purpose**: 거래 생성/수정 폼 모달
+- **Responsibilities**: 폼 입력 (날짜, 금액, 유형, 카테고리, 태그, 메모), 유효성 검증, API 호출
 
----
+### CategoryFormModal
+- **Purpose**: 카테고리 생성/수정 폼 모달
+- **Responsibilities**: 카테고리 이름/색상 입력, 유효성 검증, API 호출
 
-### 2. System Tray Manager
-**Purpose**: Manage system tray icon and menu
+### ConfirmDialog
+- **Purpose**: 삭제 등 파괴적 작업 확인 다이얼로그
+- **Responsibilities**: 확인/취소 액션 처리
 
-**Responsibilities**:
-- Create and update system tray icon
-- Build and manage tray context menu
-- Handle tray menu item clicks
-- Show/hide main window from tray
+### ExportDialog
+- **Purpose**: 데이터 내보내기 형식 선택 및 다운로드
+- **Responsibilities**: 형식 선택 (CSV/Excel/PDF), 기간 선택, 백엔드 Export API 호출 → 브라우저 다운로드
 
-**Interfaces**:
-- `createTray()`: Initialize system tray
-- `updateTrayMenu()`: Update menu items dynamically
-- `handleTrayClick()`: Handle tray icon clicks
-- `showQuickAddTransaction()`: Open quick add dialog
+### MonthlySummaryCard
+- **Purpose**: 월별 수입/지출/잔액 요약 카드
+- **Responsibilities**: 요약 데이터 표시
 
----
+### CategoryPieChart
+- **Purpose**: 카테고리별 지출 파이 차트
+- **Responsibilities**: Chart.js 파이 차트 렌더링
 
-### 3. Native Menu Manager
-**Purpose**: Manage macOS native menu bar
+### MonthlyTrendChart
+- **Purpose**: 월별 지출 추이 라인/바 차트
+- **Responsibilities**: Chart.js 차트 렌더링
 
-**Responsibilities**:
-- Build application menu structure
-- Handle menu item actions
-- Update menu state based on application state
+### TransactionList
+- **Purpose**: 거래 목록 테이블
+- **Responsibilities**: 거래 행 렌더링, 수정/삭제 액션, 정렬
 
-**Interfaces**:
-- `createMenu()`: Build native menu
-- `updateMenuState()`: Enable/disable menu items
-- `handleMenuAction()`: Process menu selections
+### TransactionFilters
+- **Purpose**: 거래 필터링 UI
+- **Responsibilities**: 기간/카테고리/태그/유형 필터 입력, 필터 상태 관리
 
----
+## Common UI Components
 
-### 4. Notification Manager
-**Purpose**: Handle native desktop notifications
-
-**Responsibilities**:
-- Send native notifications
-- Handle notification clicks
-- Manage notification permissions
-
-**Interfaces**:
-- `sendNotification(title, body, options)`: Display notification
-- `handleNotificationClick()`: Process notification interactions
-
----
-
-### 5. File System Manager
-**Purpose**: Handle file operations via IPC
-
-**Responsibilities**:
-- Show native file dialogs (save/open)
-- Write files to disk (CSV, Excel, PDF)
-- Read files from disk (import)
-- Manage file permissions
-
-**Interfaces**:
-- `showSaveDialog(options)`: Show save file dialog
-- `showOpenDialog(options)`: Show open file dialog
-- `writeFile(path, data)`: Write file to disk
-- `readFile(path)`: Read file from disk
-
----
-
-### 6. IPC Handler
-**Purpose**: Coordinate inter-process communication
-
-**Responsibilities**:
-- Register IPC handlers for renderer requests
-- Route messages between main and renderer
-- Handle async IPC operations
-- Manage IPC security
-
-**Interfaces**:
-- `registerHandlers()`: Register all IPC handlers
-- `handleFileOperation(operation, data)`: Process file requests
-- `handleNotification(data)`: Process notification requests
-- `handleWindowAction(action)`: Process window control requests
-
----
-
-### 7. State Sync Manager
-**Purpose**: Synchronize minimal state between main and renderer
-
-**Responsibilities**:
-- Sync system tray display data
-- Sync notification data
-- Broadcast state updates to renderer
-
-**Interfaces**:
-- `syncTrayData(data)`: Update tray with latest data
-- `broadcastUpdate(event, data)`: Send updates to renderer
-
----
-
-## Renderer Process Components
-
-### 8. App Shell
-**Purpose**: Root application component and layout
-
-**Responsibilities**:
-- Render main application layout
-- Manage navigation state
-- Coordinate component rendering
-- Handle global state initialization
-
-**Interfaces**:
-- `render()`: Render application shell
-- `navigate(route)`: Handle navigation
-- `initializeStores()`: Initialize Zustand stores
-
----
-
-### 9. Navigation Manager
-**Purpose**: Handle client-side routing without Next.js
-
-**Responsibilities**:
-- Manage current view/route state
-- Render appropriate page component
-- Handle navigation transitions
-
-**Interfaces**:
-- `setCurrentView(view)`: Change active view
-- `getCurrentView()`: Get current view
-- `renderView()`: Render current view component
-
----
-
-### 10. Reused UI Components
-**Purpose**: Existing React components from web app
-
-**Components** (reused from apps/frontend/components/):
-- **Layout Components**: Header, Sidebar (adapted for desktop)
-- **Form Components**: TransactionFormModal, CategoryFormModal, BudgetFormModal, TagFormModal
-- **UI Components**: Button, Input, Card, DateRangePicker, Spinner
-- **Dashboard Components**: TransactionCalendar
-- **Modals**: ExportDialog, ConfirmDialog
-
-**Adaptation Strategy**:
-- Use components as-is where possible
-- Modify components that need desktop-specific features (file dialogs, notifications)
-- Remove Next.js-specific imports (next/link, next/image)
-
----
-
-### 11. Desktop-Adapted Components
-**Purpose**: Modified components with desktop-specific features
-
-**Components**:
-- **ExportDialog (Modified)**: Use IPC for native file dialogs instead of browser download
-- **Header (Modified)**: Add window controls (minimize, maximize, close)
-- **TransactionFormModal (Modified)**: Use native notifications on save
-
----
-
-### 12. Page Components
-**Purpose**: Main application views
-
-**Components**:
-- **DashboardPage**: Overview with calendar and summary
-- **TransactionsPage**: Transaction list with filters
-- **BudgetsPage**: Budget management
-- **AnalyticsPage**: Charts and analytics
-- **SettingsPage**: Application settings
-
-**Adaptation Strategy**:
-- Remove Next.js page routing
-- Convert to regular React components
-- Render conditionally based on navigation state
-
----
-
-### 13. API Client Service
-**Purpose**: Communicate with Spring Boot backend (reused)
-
-**Responsibilities**:
-- Make HTTP requests to backend API
-- Handle authentication (none for single-user app)
-- Handle errors and retries
-- Manage API base URL configuration
-
-**Interfaces**:
-- Reuse existing API client from apps/frontend/lib/api/client.ts
-- Reuse existing API modules (transactions.ts, budgets.ts, tags.ts, etc.)
-
----
-
-### 14. IPC Bridge Service
-**Purpose**: Communicate with main process via IPC
-
-**Responsibilities**:
-- Expose IPC APIs to React components
-- Handle async IPC calls
-- Manage IPC errors
-
-**Interfaces**:
-- `fileSystem.saveFile(data, format)`: Request file save
-- `fileSystem.openFile()`: Request file open
-- `notifications.send(title, body)`: Request notification
-- `window.minimize()`: Minimize window
-- `window.maximize()`: Maximize window
-- `window.close()`: Close window
-
----
-
-### 15. Store Components (Zustand)
-**Purpose**: Client-side state management (reused)
-
-**Stores** (reused from apps/frontend/lib/stores/):
-- **transactionStore**: Transaction data and operations
-- **budgetStore**: Budget data and operations
-- **tagStore**: Tag data and operations
-- **categoryStore**: Category data and operations
-- **sessionStore**: Session preferences (theme, language)
-- **uiStore**: UI state (modals, loading)
-
-**Adaptation Strategy**:
-- Keep stores in renderer process
-- Add minimal state sync for system tray data
-- No changes to store structure
-
----
-
-## Component Count Summary
-
-**Main Process**: 7 components
-- Application Manager
-- System Tray Manager
-- Native Menu Manager
-- Notification Manager
-- File System Manager
-- IPC Handler
-- State Sync Manager
-
-**Renderer Process**: 8 component groups
-- App Shell
-- Navigation Manager
-- Reused UI Components (10+ components)
-- Desktop-Adapted Components (3 components)
-- Page Components (5 components)
-- API Client Service
-- IPC Bridge Service
-- Store Components (6 stores)
-
-**Total**: 15 major component groups with 20+ individual components
+### Button, Input, Card, Spinner, Modal, Select, DatePicker, Badge, Toast
+- **Purpose**: 재사용 가능한 기본 UI 요소
+- **Responsibilities**: 일관된 스타일링, 접근성, 이벤트 핸들링

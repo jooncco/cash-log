@@ -1,52 +1,28 @@
-# Execution Plan - Electron Desktop App Migration
+# Execution Plan
 
 ## Detailed Analysis Summary
 
 ### Transformation Scope
-- **Transformation Type**: Architectural transformation (Web → Desktop)
-- **Primary Changes**: Complete frontend framework migration (Next.js → React + Electron)
-- **Related Components**: 
-  - apps/frontend (complete transformation)
-  - apps/backend (unchanged)
-  - infrastructure/docker (unchanged)
+- **Transformation Type**: Architectural (Electron desktop → Web SPA)
+- **Primary Changes**: 프론트엔드 전체 재작성 (Electron 제거, 순수 Vite+React SPA), Docker Compose 통합
+- **Related Components**: Frontend (전면 재작성), Infrastructure (Docker Compose 추가), Backend (변경 없음)
 
 ### Change Impact Assessment
-- **User-facing changes**: Yes - Desktop application with native features (system tray, notifications, file dialogs)
-- **Structural changes**: Yes - Complete frontend architecture change, routing rebuild, entry point changes
-- **Data model changes**: No - Backend and database remain unchanged
-- **API changes**: No - Existing Spring Boot API remains unchanged
-- **NFR impact**: Yes - Desktop performance requirements, macOS-specific optimizations
+- **User-facing changes**: Yes — 데스크톱 앱에서 브라우저 기반 웹 앱으로 전환
+- **Structural changes**: Yes — Electron 아키텍처 제거, SPA 구조로 전환
+- **Data model changes**: No — 백엔드 DB 스키마 변경 없음
+- **API changes**: No — 기존 REST API 그대로 사용
+- **NFR impact**: Yes — 배포 모델 변경 (로컬 Electron → Docker Compose)
 
 ### Component Relationships
-```
-Primary Component: apps/frontend (MAJOR TRANSFORMATION)
-├── Backend API: apps/backend (NO CHANGE - existing API reused)
-├── Database: MySQL (NO CHANGE)
-├── Infrastructure: Docker setup (NO CHANGE)
-└── Build System: Complete rebuild (Next.js → Electron build)
-```
-
-**Component Change Details**:
-- **apps/frontend**: Major transformation
-  - Change Type: Complete framework migration
-  - Change Reason: Technology stack change (Next.js → Electron)
-  - Change Priority: Critical
-- **apps/backend**: No changes
-  - Existing Spring Boot API reused as-is
-- **infrastructure**: No changes
-  - MySQL Docker setup remains unchanged
+- **Primary Component**: `apps/frontend` (전면 재작성)
+- **Infrastructure Components**: `infrastructure/docker` (Docker Compose 확장)
+- **Dependent Components**: `apps/backend` (변경 없음, API 호환 유지)
 
 ### Risk Assessment
-- **Risk Level**: High
-- **Rationale**: 
-  - Complete framework migration with significant architectural changes
-  - Desktop-specific features require new implementation patterns
-  - Component reuse strategy needs careful execution
-  - No rollback to web version (complete replacement)
-- **Rollback Complexity**: Difficult (complete replacement, no parallel deployment)
-- **Testing Complexity**: Moderate (unit tests + manual desktop testing)
-
----
+- **Risk Level**: Medium
+- **Rollback Complexity**: Easy (기존 Electron 코드는 git에 보존)
+- **Testing Complexity**: Moderate (새 프론트엔드 코드 + Docker Compose 통합 검증)
 
 ## Workflow Visualization
 
@@ -59,23 +35,18 @@ flowchart TD
         RE["Reverse Engineering<br/><b>COMPLETED</b>"]
         RA["Requirements Analysis<br/><b>COMPLETED</b>"]
         US["User Stories<br/><b>SKIP</b>"]
-        WP["Workflow Planning<br/><b>IN PROGRESS</b>"]
+        WP["Workflow Planning<br/><b>COMPLETED</b>"]
         AD["Application Design<br/><b>EXECUTE</b>"]
         UG["Units Generation<br/><b>SKIP</b>"]
     end
     
     subgraph CONSTRUCTION["🟢 CONSTRUCTION PHASE"]
         FD["Functional Design<br/><b>SKIP</b>"]
-        NFRA["NFR Requirements<br/><b>EXECUTE</b>"]
-        NFRD["NFR Design<br/><b>EXECUTE</b>"]
-        ID["Infrastructure Design<br/><b>SKIP</b>"]
-        CP["Code Planning<br/><b>EXECUTE</b>"]
+        NFRA["NFR Requirements<br/><b>SKIP</b>"]
+        NFRD["NFR Design<br/><b>SKIP</b>"]
+        ID["Infrastructure Design<br/><b>EXECUTE</b>"]
         CG["Code Generation<br/><b>EXECUTE</b>"]
         BT["Build and Test<br/><b>EXECUTE</b>"]
-    end
-    
-    subgraph OPERATIONS["🟡 OPERATIONS PHASE"]
-        OPS["Operations<br/><b>PLACEHOLDER</b>"]
     end
     
     Start --> WD
@@ -83,10 +54,8 @@ flowchart TD
     RE --> RA
     RA --> WP
     WP --> AD
-    AD --> NFRA
-    NFRA --> NFRD
-    NFRD --> CP
-    CP --> CG
+    AD --> ID
+    ID --> CG
     CG --> BT
     BT --> End(["Complete"])
     
@@ -95,136 +64,62 @@ flowchart TD
     style RA fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style WP fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style AD fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
-    style NFRA fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
-    style NFRD fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
-    style CP fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
-    style CG fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
-    style BT fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
+    style ID fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
+    style CG fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style BT fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style US fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
     style UG fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
     style FD fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style ID fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style OPS fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    style NFRA fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    style NFRD fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
     style Start fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
     style End fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
     style INCEPTION fill:#BBDEFB,stroke:#1565C0,stroke-width:3px,color:#000
     style CONSTRUCTION fill:#C8E6C9,stroke:#2E7D32,stroke-width:3px,color:#000
-    style OPERATIONS fill:#FFF59D,stroke:#F57F17,stroke-width:3px,color:#000
     
     linkStyle default stroke:#333,stroke-width:2px
 ```
 
----
-
 ## Phases to Execute
 
 ### 🔵 INCEPTION PHASE
-- [x] Workspace Detection - COMPLETED
-  - **Rationale**: Analyzed existing brownfield project
-- [x] Reverse Engineering - COMPLETED
-  - **Rationale**: Existing system architecture documented
-- [x] Requirements Analysis - COMPLETED
-  - **Rationale**: Electron migration requirements gathered and clarified
-- [ ] User Stories - SKIP
-  - **Rationale**: Internal migration project, no user personas needed, clear technical requirements
-- [x] Workflow Planning - IN PROGRESS
-  - **Rationale**: Creating execution plan for migration
-- [ ] Application Design - EXECUTE
-  - **Rationale**: Need to design Electron app architecture, component structure, IPC communication, and desktop-specific patterns
-- [ ] Units Generation - SKIP
-  - **Rationale**: Single frontend transformation, no need for multiple units
+- [x] Workspace Detection (COMPLETED)
+- [x] Reverse Engineering (COMPLETED — from previous workflow)
+- [x] Requirements Analysis (COMPLETED)
+- [x] User Stories — SKIP
+  - **Rationale**: 단일 사용자 개인 재무 앱, 기존 사용자 시나리오 변경 없음, 기술 마이그레이션에 해당
+- [x] Workflow Planning (COMPLETED)
+- [ ] Application Design — EXECUTE
+  - **Rationale**: Electron 구조에서 순수 SPA 구조로 전환 시 새로운 컴포넌트 구조, 라우팅, 서비스 레이어 설계 필요
+- [ ] Units Generation — SKIP
+  - **Rationale**: 단일 유닛 (프론트엔드 웹 앱 + Docker Compose), 분해 불필요
 
 ### 🟢 CONSTRUCTION PHASE
-- [ ] Functional Design - SKIP
-  - **Rationale**: No new business logic or data models, reusing existing components
-- [ ] NFR Requirements - EXECUTE
-  - **Rationale**: Desktop-specific NFRs need assessment (Electron framework, build tools, packaging, performance)
-- [ ] NFR Design - EXECUTE
-  - **Rationale**: Need to design Electron architecture patterns, IPC mechanisms, native integrations, build pipeline
-- [ ] Infrastructure Design - SKIP
-  - **Rationale**: No infrastructure changes, backend and database unchanged
-- [ ] Code Planning - EXECUTE (ALWAYS)
-  - **Rationale**: Detailed implementation plan for framework migration
-- [ ] Code Generation - EXECUTE (ALWAYS)
-  - **Rationale**: Transform Next.js to Electron, implement desktop features
-- [ ] Build and Test - EXECUTE (ALWAYS)
-  - **Rationale**: Build Electron app, create DMG installer, test desktop features
+- [ ] Functional Design — SKIP
+  - **Rationale**: 비즈니스 로직 변경 없음, 기존 백엔드 API 그대로 사용
+- [ ] NFR Requirements — SKIP
+  - **Rationale**: 기술 스택 이미 결정 (Vite+React, TailwindCSS, Zustand), 이전 워크플로우에서 NFR 분석 완료
+- [ ] NFR Design — SKIP
+  - **Rationale**: NFR Requirements 스킵에 따라 스킵
+- [ ] Infrastructure Design — EXECUTE
+  - **Rationale**: Docker Compose 통합 (프론트엔드 Nginx + 백엔드 + MySQL) 설계 필요
+- [ ] Code Generation — EXECUTE (ALWAYS)
+  - **Rationale**: 프론트엔드 새로 작성, Dockerfile, Docker Compose 설정 생성
+- [ ] Build and Test — EXECUTE (ALWAYS)
+  - **Rationale**: 빌드, 테스트, Docker Compose 통합 검증
 
 ### 🟡 OPERATIONS PHASE
-- [ ] Operations - PLACEHOLDER
-  - **Rationale**: Future deployment and monitoring workflows
-
----
-
-## Execution Summary
-
-**Total Stages**: 13
-**Stages to Execute**: 9
-- Workspace Detection ✓
-- Reverse Engineering ✓
-- Requirements Analysis ✓
-- Workflow Planning (current)
-- Application Design
-- NFR Requirements
-- NFR Design
-- Code Planning
-- Code Generation
-- Build and Test
-
-**Stages to Skip**: 4
-- User Stories (no user personas needed)
-- Units Generation (single unit transformation)
-- Functional Design (no new business logic)
-- Infrastructure Design (no infrastructure changes)
-
----
-
-## Estimated Timeline
-
-**Phase Breakdown**:
-- Application Design: 1 session (Electron architecture, component structure)
-- NFR Requirements: 1 session (Desktop NFRs, tech stack selection)
-- NFR Design: 1 session (Electron patterns, IPC, native integrations)
-- Code Planning: 1 session (Detailed migration steps)
-- Code Generation: 2-3 sessions (Framework migration, desktop features)
-- Build and Test: 1 session (Build setup, DMG creation, testing)
-
-**Total Estimated Duration**: 7-9 sessions
-
----
+- [ ] Operations — PLACEHOLDER
 
 ## Success Criteria
-
-### Primary Goal
-Transform Next.js web app into Electron desktop app with feature parity and desktop-specific enhancements
-
-### Key Deliverables
-1. Electron app with React (no Next.js)
-2. Reused React components, stores, types, API clients
-3. Desktop-specific features (system tray, notifications, file dialogs)
-4. macOS DMG installer
-5. Build and test documentation
-
-### Quality Gates
-1. All existing features work in desktop app
-2. Desktop-specific features implemented and tested
-3. Performance meets requirements (< 3s startup, 60 FPS, < 200MB memory)
-4. DMG installer builds successfully
-5. Unit tests pass
-6. Manual desktop testing complete
-
----
-
-## Package Change Sequence
-
-**Single Package Transformation**:
-1. **apps/frontend** - Complete transformation (Next.js → Electron)
-   - Remove Next.js dependencies
-   - Add Electron dependencies
-   - Rebuild app structure and entry points
-   - Implement desktop features
-   - Update build configuration
-
-**No Changes Required**:
-- apps/backend (Spring Boot API unchanged)
-- infrastructure/docker (MySQL setup unchanged)
+- **Primary Goal**: Electron 데스크톱 앱을 브라우저 기반 웹 앱으로 전환
+- **Key Deliverables**:
+  - 순수 Vite + React SPA 프론트엔드
+  - Docker Compose 통합 실행 환경
+  - 기존 모든 기능 동작 (거래 관리, 대시보드, 설정, 내보내기)
+- **Quality Gates**:
+  - 프론트엔드 빌드 성공
+  - `docker compose up`으로 전체 스택 실행
+  - 기존 백엔드 API와 정상 통신
+  - Security Baseline 규칙 준수
+  - Property-Based Testing 규칙 준수
