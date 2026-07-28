@@ -49,14 +49,17 @@ export interface CreateTagRequest {
 }
 
 export interface MonthlySummary {
+  year: number;
+  month: number;
   totalIncome: number;
   totalExpense: number;
-  balance: number;
-  transactionCount: number;
+  netAmount: number;
 }
 
-export interface CategoryData {
-  category: string;
+export interface BreakdownItem {
+  id: number;
+  name: string;
+  color: string;
   amount: number;
   percentage: number;
 }

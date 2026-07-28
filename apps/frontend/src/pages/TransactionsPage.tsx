@@ -7,12 +7,23 @@ import { useSessionStore } from '../lib/stores/sessionStore';
 import { useTranslation } from '../lib/i18n';
 import { TransactionList } from '../components/TransactionList';
 import { TransactionFilters } from '../components/TransactionFilters';
+import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
+import type { Transaction, TransactionFilterParams } from '../types';
+
+const PAGE_SIZE = 20;
+
+function transactionSummary(tx: Transaction): string {
+  const sign = tx.transactionType === 'INCOME' ? '+' : '-';
+  const category = tx.category?.name ?? '-';
+  return `${tx.transactionDate} · ${category} · ${sign}${tx.amountKrw.toLocaleString()}원`;
+}
 
 export default function TransactionsPage() {
   const { transactionFilters: filters, setTransactionFilters, openTransactionModal, openConfirmDialog, openExportDialog } = useUIStore();
-  const { data: transactions = [], isLoading } = useTransactions(filters);
+  const { data: page, isLoading } = useTransactions({ size: PAGE_SIZE, ...filters });
+  const transactions = page?.content ?? [];
   const deleteTransaction = useDeleteTransaction();
   const language = useSessionStore((s) => s.language);
   const t = useTranslation(language);
@@ -21,11 +32,24 @@ export default function TransactionsPage() {
   useEffect(() => {
     const startDate = searchParams.get('startDate') ?? undefined;
     const endDate = searchParams.get('endDate') ?? undefined;
-    setTransactionFilters({ startDate, endDate, type: undefined, categoryIds: undefined, tagIds: undefined });
+    setTransactionFilters({ startDate, endDate, type: undefined, categoryIds: undefined, tagIds: undefined, page: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, setTransactionFilters]);
 
-  const income = transactions.filter((tx) => tx.transactionType === 'INCOME').reduce((s, tx) => s + tx.amountKrw, 0);
-  const expense = transactions.filter((tx) => tx.transactionType === 'EXPENSE').reduce((s, tx) => s + tx.amountKrw, 0);
+  // Any filter change other than the page itself should jump back to page 0,
+  // otherwise the user can land on a page number that no longer exists.
+  const handleFilterChange = (f: Partial<TransactionFilterParams>) => {
+    setTransactionFilters({ ...f, page: 0 });
+  };
+
+  const handleClear = () => {
+    setTransactionFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined, page: 0 });
+  };
+
+  const handleDelete = (tx: Transaction) => {
+    const message = `${t('deleteTransactionConfirm')}\n\n${transactionSummary(tx)}`;
+    openConfirmDialog(message, () => deleteTransaction.mutate(tx.id));
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-4" data-testid="transactions-page">
@@ -43,8 +67,8 @@ export default function TransactionsPage() {
 
       <TransactionFilters
         filters={filters}
-        onChange={(f) => setTransactionFilters(f)}
-        onClear={() => setTransactionFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined })}
+        onChange={handleFilterChange}
+        onClear={handleClear}
         t={t}
       />
 
@@ -54,18 +78,19 @@ export default function TransactionsPage() {
         <TransactionList
           transactions={transactions}
           onEdit={(tx) => openTransactionModal(tx)}
-          onDelete={(tx) =>
-            openConfirmDialog(t('deleteTransactionConfirm'), () => deleteTransaction.mutate(tx.id))
-          }
+          onDelete={handleDelete}
           t={t}
         />
       )}
 
-      <div className="flex justify-end gap-6 pt-3 text-sm">
-        <span className="text-green-600 font-medium">{t('income')}: +{income.toLocaleString()}원</span>
-        <span className="text-red-600 font-medium">{t('expense')}: -{expense.toLocaleString()}원</span>
-        <span className="font-bold text-gray-900 dark:text-white">{t('balance')}: {(income - expense).toLocaleString()}원</span>
-      </div>
+      <Pagination
+        page={page?.page ?? 0}
+        totalPages={page?.totalPages ?? 0}
+        totalElements={page?.totalElements ?? 0}
+        onPageChange={(p) => setTransactionFilters({ page: p })}
+        totalLabel={t('totalCount')}
+        pageLabel={t('page')}
+      />
     </div>
   );
 }

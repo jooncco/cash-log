@@ -16,7 +16,7 @@ export function ConfirmDialog() {
 
   return (
     <Modal open={confirmDialogOpen} onClose={closeConfirmDialog} title={t('confirmAction')}>
-      <p className="mb-6 text-gray-700 dark:text-gray-300">{confirmMessage}</p>
+      <p className="mb-6 whitespace-pre-line text-gray-700 dark:text-gray-300">{confirmMessage}</p>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={closeConfirmDialog} data-testid="confirm-cancel">
           {t('cancel')}

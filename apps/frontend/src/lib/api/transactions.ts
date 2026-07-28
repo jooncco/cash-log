@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Transaction, CreateTransactionRequest, TransactionFilterParams } from '../../types';
+import type { Transaction, CreateTransactionRequest, TransactionFilterParams, PageResponse } from '../../types';
 
 function buildQuery(params?: TransactionFilterParams): string {
   if (!params) return '';
@@ -17,7 +17,7 @@ function buildQuery(params?: TransactionFilterParams): string {
 
 export const transactionApi = {
   getAll: (params?: TransactionFilterParams) =>
-    apiClient.get<Transaction[]>(`/api/transactions${buildQuery(params)}`),
+    apiClient.get<PageResponse<Transaction>>(`/api/transactions${buildQuery(params)}`),
   getById: (id: number) => apiClient.get<Transaction>(`/api/transactions/${id}`),
   create: (data: CreateTransactionRequest) => apiClient.post<Transaction>('/api/transactions', data),
   update: (id: number, data: CreateTransactionRequest) =>

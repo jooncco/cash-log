@@ -11,7 +11,11 @@ import com.cashlog.mapper.TransactionMapper;
 import com.cashlog.repository.CategoryRepository;
 import com.cashlog.repository.TagRepository;
 import com.cashlog.repository.TransactionRepository;
+import com.cashlog.specification.TransactionSpecifications;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +78,21 @@ public class TransactionService {
         return transactionRepository.findByTransactionDateBetweenOrderByTransactionDateDesc(startDate, endDate).stream()
                 .map(transactionMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * DB-level filtered + paginated lookup, replacing the old approach of pulling
+     * a (possibly date-ranged) list into memory and filtering it with streams.
+     */
+    public Page<TransactionDTO> getTransactions(
+            LocalDate startDate,
+            LocalDate endDate,
+            TransactionType type,
+            List<Long> categoryIds,
+            List<Long> tagIds,
+            Pageable pageable) {
+        Specification<Transaction> spec = TransactionSpecifications.withFilters(startDate, endDate, type, categoryIds, tagIds);
+        return transactionRepository.findAll(spec, pageable).map(transactionMapper::toDTO);
     }
     
     @Transactional

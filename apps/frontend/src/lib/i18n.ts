@@ -43,6 +43,7 @@ export const translations = {
     deleteTransactionConfirm: '이 거래를 삭제하시겠습니까?',
     deleteTagConfirm: '이 태그를 삭제하시겠습니까?',
     deleteCategoryConfirm: '이 카테고리를 삭제하시겠습니까?',
+    totalCount: '전체', page: '페이지',
   },
   en: {
     dashboard: 'Dashboard', transactions: 'Transactions', analytics: 'Analytics', settings: 'Settings',
@@ -88,6 +89,7 @@ export const translations = {
     deleteTransactionConfirm: 'Are you sure you want to delete this transaction?',
     deleteTagConfirm: 'Are you sure you want to delete this tag?',
     deleteCategoryConfirm: 'Are you sure you want to delete this category?',
+    totalCount: 'Total', page: 'Page',
   },
 } as const;
 

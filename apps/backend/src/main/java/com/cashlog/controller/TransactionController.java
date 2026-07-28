@@ -1,12 +1,18 @@
 package com.cashlog.controller;
 
 import com.cashlog.dto.request.CreateTransactionRequest;
+import com.cashlog.dto.response.PageResponseDTO;
 import com.cashlog.dto.response.TransactionDTO;
+import com.cashlog.entity.TransactionType;
 import com.cashlog.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,32 +44,21 @@ public class TransactionController {
     }
     
     @GetMapping
-    @Operation(summary = "Get all transactions with optional filters")
-    public ResponseEntity<List<TransactionDTO>> getTransactions(
+    @Operation(summary = "Get transactions with optional filters, paginated")
+    public ResponseEntity<PageResponseDTO<TransactionDTO>> getTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) List<Long> categoryId,
-            @RequestParam(required = false) List<Long> tagId) {
-        
-        List<TransactionDTO> transactions;
-        if (startDate != null && endDate != null) {
-            transactions = transactionService.getTransactionsByDateRange(startDate, endDate);
-        } else {
-            transactions = transactionService.getAllTransactions();
-        }
+            @RequestParam(required = false) List<Long> tagId,
+            @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        if (type != null) {
-            transactions = transactions.stream().filter(t -> t.getTransactionType().name().equals(type)).toList();
-        }
-        if (categoryId != null && !categoryId.isEmpty()) {
-            transactions = transactions.stream().filter(t -> t.getCategory() != null && categoryId.contains(t.getCategory().getId())).toList();
-        }
-        if (tagId != null && !tagId.isEmpty()) {
-            transactions = transactions.stream().filter(t -> t.getTags().stream().anyMatch(tag -> tagId.contains(tag.getId()))).toList();
-        }
+        TransactionType transactionType = type != null ? TransactionType.valueOf(type) : null;
 
-        return ResponseEntity.ok(transactions);
+        Page<TransactionDTO> transactions = transactionService.getTransactions(
+                startDate, endDate, transactionType, categoryId, tagId, pageable);
+
+        return ResponseEntity.ok(PageResponseDTO.of(transactions));
     }
     
     @PutMapping("/{id}")
