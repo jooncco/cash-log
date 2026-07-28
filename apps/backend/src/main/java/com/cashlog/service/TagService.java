@@ -21,15 +21,16 @@ public class TagService {
     
     @Transactional
     public TagDTO createTag(CreateTagRequest request) {
-        if (tagRepository.existsByName(request.getName())) {
-            throw new IllegalArgumentException("Tag already exists: " + request.getName());
+        String name = normalize(request.getName());
+        if (tagRepository.existsByNameIgnoreCase(name)) {
+            throw new IllegalArgumentException("Tag already exists: " + name);
         }
-        
+
         Tag tag = Tag.builder()
-                .name(request.getName())
+                .name(name)
                 .color(request.getColor())
                 .build();
-        
+
         Tag saved = tagRepository.save(tag);
         return toDTO(saved);
     }
@@ -44,10 +45,17 @@ public class TagService {
     public TagDTO updateTag(Long id, CreateTagRequest request) {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id));
-        
-        tag.setName(request.getName());
+
+        String name = normalize(request.getName());
+        tagRepository.findByNameIgnoreCase(name)
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("Tag already exists: " + name);
+                });
+
+        tag.setName(name);
         tag.setColor(request.getColor());
-        
+
         Tag updated = tagRepository.save(tag);
         return toDTO(updated);
     }
@@ -60,6 +68,10 @@ public class TagService {
         tagRepository.deleteById(id);
     }
     
+    private String normalize(String name) {
+        return name == null ? null : name.trim();
+    }
+
     private TagDTO toDTO(Tag tag) {
         return TagDTO.builder()
                 .id(tag.getId())

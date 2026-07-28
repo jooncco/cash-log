@@ -30,6 +30,13 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
 
+app:
+  cors:
+    # Comma-separated list of allowed origins for /api/**.
+    # Local dev without a profile defaults to the Vite dev server port (5173).
+    # Production (nginx same-origin proxy) can override via APP_CORS_ALLOWED_ORIGINS.
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
 server:
   port: 8080
   servlet:

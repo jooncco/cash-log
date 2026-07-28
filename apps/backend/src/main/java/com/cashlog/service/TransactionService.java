@@ -37,20 +37,11 @@ public class TransactionService {
         BigDecimal amountKrw = calculateAmountKrw(request.getOriginalAmount(), 
                 request.getOriginalCurrency(), request.getConversionRate());
         
-        Set<Tag> tags = new HashSet<>();
-        if (request.getTagNames() != null && !request.getTagNames().isEmpty()) {
-            tags = request.getTagNames().stream()
-                    .map(name -> tagRepository.findByName(name)
-                            .orElseGet(() -> tagRepository.save(Tag.builder()
-                                    .name(name)
-                                    .color(generateRandomColor())
-                                    .build())))
-                    .collect(Collectors.toSet());
-        }
-        
+        Set<Tag> tags = resolveTags(request.getTagNames());
+
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryId()));
-        
+
         Transaction transaction = Transaction.builder()
                 .transactionDate(request.getTransactionDate())
                 .transactionType(request.getTransactionType())
@@ -93,20 +84,11 @@ public class TransactionService {
         BigDecimal amountKrw = calculateAmountKrw(request.getOriginalAmount(), 
                 request.getOriginalCurrency(), request.getConversionRate());
         
-        Set<Tag> tags = new HashSet<>();
-        if (request.getTagNames() != null && !request.getTagNames().isEmpty()) {
-            tags = request.getTagNames().stream()
-                    .map(name -> tagRepository.findByName(name)
-                            .orElseGet(() -> tagRepository.save(Tag.builder()
-                                    .name(name)
-                                    .color(generateRandomColor())
-                                    .build())))
-                    .collect(Collectors.toSet());
-        }
-        
+        Set<Tag> tags = resolveTags(request.getTagNames());
+
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryId()));
-        
+
         transaction.setTransactionDate(request.getTransactionDate());
         transaction.setTransactionType(request.getTransactionType());
         transaction.setOriginalAmount(request.getOriginalAmount());
@@ -138,14 +120,42 @@ public class TransactionService {
         }
         return originalAmount.multiply(conversionRate);
     }
-    
-    private String generateRandomColor() {
+
+    /**
+     * Resolves (or creates) tags for the given raw tag names, normalizing each
+     * name by trimming whitespace and looking it up case-insensitively so that
+     * "식비", "식비 " and "식비" (mixed case for latin tags) all resolve to the
+     * same tag instead of creating duplicates.
+     */
+    private Set<Tag> resolveTags(Set<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            return new HashSet<>();
+        }
+        return tagNames.stream()
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .distinct()
+                .map(name -> tagRepository.findByNameIgnoreCase(name)
+                        .orElseGet(() -> tagRepository.save(Tag.builder()
+                                .name(name)
+                                .color(generateColorForName(name))
+                                .build())))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Deterministically maps a tag name to a color in the palette so the same
+     * tag name always gets the same color, instead of a random one on every
+     * (re)creation.
+     */
+    private String generateColorForName(String name) {
         String[] colors = {
-            "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", 
+            "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899",
             "#14B8A6", "#F97316", "#06B6D4", "#84CC16", "#F43F5E", "#A855F7",
             "#22D3EE", "#FCD34D", "#FB923C", "#4ADE80", "#818CF8", "#F472B6",
             "#2DD4BF", "#FDE047", "#FB7185", "#C084FC", "#38BDF8", "#BEF264"
         };
-        return colors[(int) (Math.random() * colors.length)];
+        int index = Math.floorMod(name.toLowerCase().hashCode(), colors.length);
+        return colors[index];
     }
 }
