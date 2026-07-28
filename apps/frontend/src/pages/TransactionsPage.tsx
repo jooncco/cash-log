@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Download } from 'lucide-react';
-import { useTransactionStore } from '../lib/stores/transactionStore';
-import { useCategoryStore } from '../lib/stores/categoryStore';
-import { useTagStore } from '../lib/stores/tagStore';
+import { useTransactions, useDeleteTransaction } from '../lib/queries/transactions';
 import { useUIStore } from '../lib/stores/uiStore';
 import { useSessionStore } from '../lib/stores/sessionStore';
 import { useTranslation } from '../lib/i18n';
@@ -13,11 +11,9 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 
 export default function TransactionsPage() {
-  const { transactions, filters, loading, setFilters } = useTransactionStore();
-  const { fetchCategories } = useCategoryStore();
-  const { fetchTags } = useTagStore();
-  const { openTransactionModal, openConfirmDialog, openExportDialog } = useUIStore();
-  const { deleteTransaction } = useTransactionStore();
+  const { transactionFilters: filters, setTransactionFilters, openTransactionModal, openConfirmDialog, openExportDialog } = useUIStore();
+  const { data: transactions = [], isLoading } = useTransactions(filters);
+  const deleteTransaction = useDeleteTransaction();
   const language = useSessionStore((s) => s.language);
   const t = useTranslation(language);
   const [searchParams] = useSearchParams();
@@ -25,10 +21,8 @@ export default function TransactionsPage() {
   useEffect(() => {
     const startDate = searchParams.get('startDate') ?? undefined;
     const endDate = searchParams.get('endDate') ?? undefined;
-    setFilters({ startDate, endDate, type: undefined, categoryIds: undefined, tagIds: undefined });
-    fetchCategories();
-    fetchTags();
-  }, [searchParams, setFilters, fetchCategories, fetchTags]);
+    setTransactionFilters({ startDate, endDate, type: undefined, categoryIds: undefined, tagIds: undefined });
+  }, [searchParams, setTransactionFilters]);
 
   const income = transactions.filter((tx) => tx.transactionType === 'INCOME').reduce((s, tx) => s + tx.amountKrw, 0);
   const expense = transactions.filter((tx) => tx.transactionType === 'EXPENSE').reduce((s, tx) => s + tx.amountKrw, 0);
@@ -49,19 +43,19 @@ export default function TransactionsPage() {
 
       <TransactionFilters
         filters={filters}
-        onChange={(f) => setFilters(f)}
-        onClear={() => setFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined })}
+        onChange={(f) => setTransactionFilters(f)}
+        onClear={() => setTransactionFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined })}
         t={t}
       />
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : (
         <TransactionList
           transactions={transactions}
           onEdit={(tx) => openTransactionModal(tx)}
           onDelete={(tx) =>
-            openConfirmDialog(t('deleteTransactionConfirm'), () => deleteTransaction(tx.id))
+            openConfirmDialog(t('deleteTransactionConfirm'), () => deleteTransaction.mutate(tx.id))
           }
           t={t}
         />

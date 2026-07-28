@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { Transaction, Tag, Category, Toast } from '../../types';
+import type { Transaction, Tag, Category, Toast, TransactionFilterParams } from '../../types';
 
 interface UIState {
   transactionModalOpen: boolean;
@@ -16,6 +16,8 @@ interface UIState {
   confirmMessage: string;
   confirmAction: (() => void) | null;
   toasts: Toast[];
+  /** Currently selected filters on the transactions list page (pure UI selection state). */
+  transactionFilters: TransactionFilterParams;
 
   openTransactionModal: (tx?: Transaction) => void;
   closeTransactionModal: () => void;
@@ -29,6 +31,8 @@ interface UIState {
   closeConfirmDialog: () => void;
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
+  setTransactionFilters: (filters: Partial<TransactionFilterParams>) => void;
+  resetTransactionFilters: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -46,6 +50,7 @@ export const useUIStore = create<UIState>()(
     confirmMessage: '',
     confirmAction: null,
     toasts: [],
+    transactionFilters: {},
 
     openTransactionModal: (tx) =>
       set({ transactionModalOpen: true, editingTransaction: tx ?? null }),
@@ -68,5 +73,8 @@ export const useUIStore = create<UIState>()(
     addToast: (toast) =>
       set((s) => ({ toasts: [...s.toasts, { ...toast, id: Math.random().toString(36).slice(2) }] })),
     removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+    setTransactionFilters: (filters) =>
+      set((s) => ({ transactionFilters: { ...s.transactionFilters, ...filters } })),
+    resetTransactionFilters: () => set({ transactionFilters: {} }),
   })),
 );

@@ -4,7 +4,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useUIStore } from '../../lib/stores/uiStore';
-import { useCategoryStore } from '../../lib/stores/categoryStore';
+import { useCreateCategory, useUpdateCategory } from '../../lib/queries/categories';
 import { useSessionStore } from '../../lib/stores/sessionStore';
 import { useTranslation } from '../../lib/i18n';
 
@@ -15,7 +15,8 @@ interface FormData {
 
 export function CategoryFormModal() {
   const { categoryModalOpen, editingCategory, closeCategoryModal } = useUIStore();
-  const { addCategory, updateCategory } = useCategoryStore();
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
   const language = useSessionStore((s) => s.language);
   const t = useTranslation(language);
 
@@ -28,12 +29,17 @@ export function CategoryFormModal() {
   }, [categoryModalOpen, editingCategory, reset]);
 
   const onSubmit = async (data: FormData) => {
-    if (editingCategory) {
-      await updateCategory(editingCategory.id, data);
-    } else {
-      await addCategory(data);
+    try {
+      if (editingCategory) {
+        await updateCategory.mutateAsync({ id: editingCategory.id, data });
+      } else {
+        await createCategory.mutateAsync(data);
+      }
+      closeCategoryModal();
+    } catch {
+      // Failure is already surfaced via the toast wired in the mutation's onError;
+      // keep the modal open so the user can retry.
     }
-    closeCategoryModal();
   };
 
   return (

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { useTransactionStore } from '../lib/stores/transactionStore';
+import { useTransactions } from '../lib/queries/transactions';
 import { useSessionStore } from '../lib/stores/sessionStore';
 import { useTranslation } from '../lib/i18n';
 import { MonthlySummaryCard } from '../components/MonthlySummaryCard';
@@ -51,17 +51,13 @@ function TopTable({ items, type, noDataLabel, t }: { items: Transaction[]; type:
 }
 
 export default function DashboardPage() {
-  const { transactions, loading, setFilters } = useTransactionStore();
+  const { data: transactions = [], isLoading } = useTransactions();
   const language = useSessionStore((s) => s.language);
   const theme = useSessionStore((s) => s.theme);
   const t = useTranslation(language);
   const navigate = useNavigate();
 
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
-
-  useEffect(() => {
-    setFilters({ startDate: undefined, endDate: undefined, type: undefined, categoryIds: undefined, tagIds: undefined });
-  }, [setFilters]);
 
   const monthTx = useMemo(
     () => transactions.filter((tx) => tx.transactionDate.startsWith(selectedMonth)),
@@ -74,7 +70,7 @@ export default function DashboardPage() {
   const topIncome = monthTx.filter((tx) => tx.transactionType === 'INCOME').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
   const topExpense = monthTx.filter((tx) => tx.transactionType === 'EXPENSE').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
 
-  if (loading && transactions.length === 0) {
+  if (isLoading && transactions.length === 0) {
     return <div className="flex h-full items-center justify-center"><Spinner /></div>;
   }
 

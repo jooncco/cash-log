@@ -1,5 +1,5 @@
-import { useCategoryStore } from '../lib/stores/categoryStore';
-import { useTagStore } from '../lib/stores/tagStore';
+import { useCategories } from '../lib/queries/categories';
+import { useTags } from '../lib/queries/tags';
 import type { TransactionFilterParams } from '../types';
 import type { TranslationKey } from '../lib/i18n';
 
@@ -16,8 +16,8 @@ function toggleId(ids: number[] | undefined, id: number): number[] {
 }
 
 export function TransactionFilters({ filters, onChange, onClear, t }: Props) {
-  const { categories } = useCategoryStore();
-  const { tags } = useTagStore();
+  const { data: categories = [] } = useCategories();
+  const { data: tags = [] } = useTags();
 
   const activeCount = [filters.startDate, filters.endDate, filters.type].filter(Boolean).length + (filters.categoryIds?.length ?? 0) + (filters.tagIds?.length ?? 0);
 

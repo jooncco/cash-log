@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sun, Moon, Plus, Edit, Trash2 } from 'lucide-react';
 import { useSessionStore } from '../lib/stores/sessionStore';
-import { useCategoryStore } from '../lib/stores/categoryStore';
-import { useTagStore } from '../lib/stores/tagStore';
+import { useCategories, useDeleteCategory } from '../lib/queries/categories';
+import { useTags, useCreateTag, useDeleteTag } from '../lib/queries/tags';
 import { useUIStore } from '../lib/stores/uiStore';
 import { useTranslation } from '../lib/i18n';
 import { Card } from '../components/ui/Card';
@@ -11,23 +11,25 @@ import { Badge } from '../components/ui/Badge';
 
 export default function SettingsPage() {
   const { theme, setTheme, language, setLanguage } = useSessionStore();
-  const { categories, fetchCategories } = useCategoryStore();
-  const { tags, fetchTags, addTag, removeTag } = useTagStore();
+  const { data: categories = [] } = useCategories();
+  const deleteCategory = useDeleteCategory();
+  const { data: tags = [] } = useTags();
+  const createTag = useCreateTag();
+  const deleteTag = useDeleteTag();
   const { openCategoryModal, openConfirmDialog } = useUIStore();
   const t = useTranslation(language);
 
   const [tagName, setTagName] = useState('');
   const [tagColor, setTagColor] = useState('#6b7280');
 
-  useEffect(() => {
-    fetchCategories();
-    fetchTags();
-  }, [fetchCategories, fetchTags]);
-
   const handleAddTag = async () => {
     if (!tagName.trim()) return;
-    await addTag({ name: tagName.trim(), color: tagColor });
-    setTagName('');
+    try {
+      await createTag.mutateAsync({ name: tagName.trim(), color: tagColor });
+      setTagName('');
+    } catch {
+      // Failure is already surfaced via the toast wired in the mutation's onError.
+    }
   };
 
   return (
@@ -88,7 +90,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => openCategoryModal(cat)} className="text-gray-400 hover:text-blue-600" data-testid={`edit-cat-${cat.id}`}><Edit size={14} /></button>
-                  <button onClick={() => openConfirmDialog(t('deleteCategoryConfirm'), () => useCategoryStore.getState().removeCategory(cat.id))}
+                  <button onClick={() => openConfirmDialog(t('deleteCategoryConfirm'), () => deleteCategory.mutate(cat.id))}
                     className="text-gray-400 hover:text-red-600" data-testid={`delete-cat-${cat.id}`}><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -119,7 +121,7 @@ export default function SettingsPage() {
               <div key={tag.id} className="flex items-center gap-1">
                 <Badge label={tag.name} color={tag.color} />
                 <button
-                  onClick={() => openConfirmDialog(t('deleteTagConfirm'), () => removeTag(tag.id))}
+                  onClick={() => openConfirmDialog(t('deleteTagConfirm'), () => deleteTag.mutate(tag.id))}
                   className="text-gray-400 hover:text-red-600"
                   data-testid={`delete-tag-${tag.id}`}
                 >

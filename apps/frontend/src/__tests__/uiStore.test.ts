@@ -8,6 +8,7 @@ beforeEach(() => {
     exportDialogOpen: false,
     confirmDialogOpen: false, confirmMessage: '', confirmAction: null,
     toasts: [],
+    transactionFilters: {},
   });
 });
 
@@ -33,5 +34,17 @@ describe('uiStore', () => {
     const id = useUIStore.getState().toasts[0].id;
     useUIStore.getState().removeToast(id);
     expect(useUIStore.getState().toasts).toHaveLength(0);
+  });
+
+  it('setTransactionFilters merges into existing filters', () => {
+    useUIStore.getState().setTransactionFilters({ startDate: '2024-01-01' });
+    useUIStore.getState().setTransactionFilters({ type: 'EXPENSE' });
+    expect(useUIStore.getState().transactionFilters).toEqual({ startDate: '2024-01-01', type: 'EXPENSE' });
+  });
+
+  it('resetTransactionFilters clears all filters', () => {
+    useUIStore.getState().setTransactionFilters({ startDate: '2024-01-01', type: 'EXPENSE' });
+    useUIStore.getState().resetTransactionFilters();
+    expect(useUIStore.getState().transactionFilters).toEqual({});
   });
 });

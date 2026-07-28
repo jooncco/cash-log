@@ -12,6 +12,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "chart.js": "^4.4.0",
     "date-fns": "^3.3.0",
     "lucide-react": "^0.320.0",
