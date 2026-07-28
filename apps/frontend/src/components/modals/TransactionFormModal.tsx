@@ -5,9 +5,9 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { useUIStore } from '../../lib/stores/uiStore';
-import { useTransactionStore } from '../../lib/stores/transactionStore';
-import { useCategoryStore } from '../../lib/stores/categoryStore';
-import { useTagStore } from '../../lib/stores/tagStore';
+import { useCreateTransaction, useUpdateTransaction } from '../../lib/queries/transactions';
+import { useCategories } from '../../lib/queries/categories';
+import { useTags } from '../../lib/queries/tags';
 import { useSessionStore } from '../../lib/stores/sessionStore';
 import { useTranslation } from '../../lib/i18n';
 import type { CreateTransactionRequest } from '../../types';
@@ -23,9 +23,10 @@ interface FormData {
 
 export function TransactionFormModal() {
   const { transactionModalOpen, editingTransaction, closeTransactionModal } = useUIStore();
-  const { addTransaction, updateTransaction } = useTransactionStore();
-  const { categories, fetchCategories } = useCategoryStore();
-  const { tags, fetchTags } = useTagStore();
+  const createTransaction = useCreateTransaction();
+  const updateTransaction = useUpdateTransaction();
+  const { data: categories = [] } = useCategories();
+  const { data: tags = [] } = useTags();
   const language = useSessionStore((s) => s.language);
   const t = useTranslation(language);
 
@@ -37,8 +38,6 @@ export function TransactionFormModal() {
 
   useEffect(() => {
     if (transactionModalOpen) {
-      fetchCategories();
-      fetchTags();
       if (editingTransaction) {
         reset({
           transactionDate: editingTransaction.transactionDate,
@@ -54,7 +53,7 @@ export function TransactionFormModal() {
         setSelectedTags([]);
       }
     }
-  }, [transactionModalOpen, editingTransaction, reset, fetchCategories, fetchTags]);
+  }, [transactionModalOpen, editingTransaction, reset]);
 
   const onSubmit = async (data: FormData) => {
     const req: CreateTransactionRequest = {
@@ -63,12 +62,17 @@ export function TransactionFormModal() {
       categoryId: Number(data.categoryId),
       tagNames: selectedTags,
     };
-    if (editingTransaction) {
-      await updateTransaction(editingTransaction.id, req);
-    } else {
-      await addTransaction(req);
+    try {
+      if (editingTransaction) {
+        await updateTransaction.mutateAsync({ id: editingTransaction.id, data: req });
+      } else {
+        await createTransaction.mutateAsync(req);
+      }
+      closeTransactionModal();
+    } catch {
+      // Failure is already surfaced via the toast wired in the mutation's onError;
+      // keep the modal open so the user can retry.
     }
-    closeTransactionModal();
   };
 
   const handleTagKeyDown = (e: React.KeyboardEvent) => {

@@ -5,6 +5,7 @@ import { TransactionFormModal } from '../modals/TransactionFormModal';
 import { CategoryFormModal } from '../modals/CategoryFormModal';
 import { ConfirmDialog } from '../modals/ConfirmDialog';
 import { ExportDialog } from '../modals/ExportDialog';
+import { ToastContainer } from '../ToastContainer';
 import { useSessionStore } from '../../lib/stores/sessionStore';
 
 export function AppLayout() {
@@ -24,6 +25,7 @@ export function AppLayout() {
       <CategoryFormModal />
       <ConfirmDialog />
       <ExportDialog />
+      <ToastContainer />
     </div>
   );
 }
