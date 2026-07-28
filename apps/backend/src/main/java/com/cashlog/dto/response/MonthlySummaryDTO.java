@@ -15,8 +15,4 @@ public class MonthlySummaryDTO {
     private BigDecimal totalIncome;
     private BigDecimal totalExpense;
     private BigDecimal netAmount;
-    private BigDecimal budgetTarget;
-    private BigDecimal budgetRemaining;
-    private Double budgetUsagePercentage;
-    private String alertLevel;
 }
