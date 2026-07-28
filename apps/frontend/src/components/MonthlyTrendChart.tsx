@@ -96,7 +96,7 @@ export function MonthlyTrendChart({ transactions, title, incomeLabel, expenseLab
         plugins: { legend: { position: 'bottom', labels: { color: theme === 'dark' ? '#e5e7eb' : '#374151' } }, tooltip: { mode: 'index', intersect: false } },
         scales: {
           x: { ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' }, grid: { color: theme === 'dark' ? '#374151' : '#e5e7eb' } },
-          y: { ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' }, grid: { color: theme === 'dark' ? '#374151' : '#e5e7eb' } },
+          y: { beginAtZero: true, ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' }, grid: { color: theme === 'dark' ? '#374151' : '#e5e7eb' } },
         },
       }} />
     </Card>
