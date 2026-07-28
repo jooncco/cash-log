@@ -6,7 +6,7 @@ import { useCreateTransaction, useDeleteTransaction, useTransactions } from '../
 import { transactionApi } from '../lib/api/transactions';
 import { useUIStore } from '../lib/stores/uiStore';
 import { APIError } from '../lib/api/client';
-import type { Transaction } from '../types';
+import type { PageResponse, Transaction } from '../types';
 
 jest.mock('../lib/api/transactions');
 const mockedApi = jest.mocked(transactionApi);
@@ -17,6 +17,10 @@ const mockTx: Transaction = {
   category: { id: 1, name: 'Food', color: '#ff0000', createdAt: '', updatedAt: '' },
   memo: 'lunch', tags: [], createdAt: '', updatedAt: '',
 };
+
+function mockPage(content: Transaction[]): PageResponse<Transaction> {
+  return { content, page: 0, size: 20, totalElements: content.length, totalPages: 1 };
+}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -36,13 +40,13 @@ beforeEach(() => {
 });
 
 describe('useTransactions', () => {
-  it('fetches and returns the transaction list', async () => {
-    mockedApi.getAll.mockResolvedValue([mockTx]);
+  it('fetches and returns the paginated transaction list', async () => {
+    mockedApi.getAll.mockResolvedValue(mockPage([mockTx]));
 
     const { result } = renderHook(() => useTransactions(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual([mockTx]);
+    expect(result.current.data).toEqual(mockPage([mockTx]));
     expect(mockedApi.getAll).toHaveBeenCalledWith({});
   });
 

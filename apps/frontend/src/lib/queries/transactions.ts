@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { transactionApi } from '../api/transactions';
 import { reportMutationError } from './mutationError';
-import type { CreateTransactionRequest, Transaction, TransactionFilterParams } from '../../types';
+import { analyticsKeys } from './analytics';
+import type { CreateTransactionRequest, PageResponse, Transaction, TransactionFilterParams } from '../../types';
 
 export const transactionKeys = {
   all: ['transactions'] as const,
@@ -21,6 +22,7 @@ export function useCreateTransaction() {
     mutationFn: (data: CreateTransactionRequest) => transactionApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
     onError: reportMutationError,
   });
@@ -33,6 +35,7 @@ export function useUpdateTransaction() {
       transactionApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
     onError: reportMutationError,
   });
@@ -44,10 +47,15 @@ export function useDeleteTransaction() {
     mutationFn: (id: number) => transactionApi.delete(id),
     onMutate: async (id: number) => {
       await queryClient.cancelQueries({ queryKey: transactionKeys.all });
-      const previousLists = queryClient.getQueriesData<Transaction[]>({ queryKey: transactionKeys.all });
+      const previousLists = queryClient.getQueriesData<PageResponse<Transaction>>({ queryKey: transactionKeys.all });
       previousLists.forEach(([queryKey, data]) => {
         if (!data) return;
-        queryClient.setQueryData<Transaction[]>(queryKey, data.filter((tx) => tx.id !== id));
+        const content = data.content.filter((tx) => tx.id !== id);
+        queryClient.setQueryData<PageResponse<Transaction>>(queryKey, {
+          ...data,
+          content,
+          totalElements: Math.max(0, data.totalElements - (content.length === data.content.length ? 0 : 1)),
+        });
       });
       return { previousLists };
     },
@@ -59,6 +67,7 @@ export function useDeleteTransaction() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
   });
 }

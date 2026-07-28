@@ -1,50 +1,55 @@
+import { useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
 import { Card } from './ui/Card';
-import type { Transaction } from '../types';
+import { TypeToggle } from './ui/TypeToggle';
+import { useTagBreakdown } from '../lib/queries/analytics';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 interface Props {
-  transactions: Transaction[];
+  year: number;
+  month: number;
   title: string;
   noDataLabel: string;
+  incomeLabel: string;
+  expenseLabel: string;
   theme?: 'light' | 'dark';
 }
 
-export function TagPieChart({ transactions, title, noDataLabel, theme = 'light' }: Props) {
-  const grouped = new Map<string, { amount: number; color: string }>();
+export function TagPieChart({ year, month, title, noDataLabel, incomeLabel, expenseLabel, theme = 'light' }: Props) {
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+  const { data: breakdown = [] } = useTagBreakdown(year, month, type);
 
-  for (const tx of transactions) {
-    for (const tag of tx.tags) {
-      const prev = grouped.get(tag.name) ?? { amount: 0, color: tag.color };
-      grouped.set(tag.name, { amount: prev.amount + tx.amountKrw, color: prev.color });
-    }
-  }
+  const header = (
+    <div className="mb-4 flex items-center justify-between">
+      <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
+      <TypeToggle value={type} onChange={setType} incomeLabel={incomeLabel} expenseLabel={expenseLabel} />
+    </div>
+  );
 
-  if (grouped.size === 0) {
+  if (breakdown.length === 0) {
     return (
       <Card>
-        <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">{title}</h3>
+        {header}
         <p className="text-sm text-gray-500">{noDataLabel}</p>
       </Card>
     );
   }
 
-  const labels = [...grouped.keys()];
   const data = {
-    labels,
+    labels: breakdown.map((b) => b.name),
     datasets: [
       {
-        data: labels.map((l) => grouped.get(l)!.amount),
-        backgroundColor: labels.map((l) => grouped.get(l)!.color),
+        data: breakdown.map((b) => b.amount),
+        backgroundColor: breakdown.map((b) => b.color),
       },
     ],
   };
 
   return (
     <Card>
-      <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">{title}</h3>
+      {header}
       <div className="relative h-72">
         <Bar data={data} options={{
           responsive: true,
