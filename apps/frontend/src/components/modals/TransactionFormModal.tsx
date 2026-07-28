@@ -17,6 +17,7 @@ interface FormData {
   transactionType: 'INCOME' | 'EXPENSE';
   originalAmount: number;
   originalCurrency: string;
+  conversionRate?: number;
   categoryId: number;
   memo: string;
 }
@@ -34,7 +35,9 @@ export function TransactionFormModal() {
   const [tagInput, setTagInput] = useState('');
   const [isComposing, setIsComposing] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>();
+  const originalCurrency = watch('originalCurrency');
+  const isForeignCurrency = Boolean(originalCurrency) && originalCurrency !== 'KRW';
 
   useEffect(() => {
     if (transactionModalOpen) {
@@ -44,12 +47,13 @@ export function TransactionFormModal() {
           transactionType: editingTransaction.transactionType,
           originalAmount: editingTransaction.originalAmount,
           originalCurrency: editingTransaction.originalCurrency,
+          conversionRate: editingTransaction.conversionRate,
           categoryId: editingTransaction.category?.id,
           memo: editingTransaction.memo ?? '',
         });
         setSelectedTags(editingTransaction.tags.map((tag) => tag.name));
       } else {
-        reset({ transactionDate: '', transactionType: 'EXPENSE', originalAmount: 0, originalCurrency: 'KRW', categoryId: 0, memo: '' });
+        reset({ transactionDate: '', transactionType: 'EXPENSE', originalAmount: 0, originalCurrency: 'KRW', conversionRate: undefined, categoryId: 0, memo: '' });
         setSelectedTags([]);
       }
     }
@@ -60,6 +64,7 @@ export function TransactionFormModal() {
       ...data,
       originalAmount: Number(data.originalAmount),
       categoryId: Number(data.categoryId),
+      conversionRate: data.originalCurrency === 'KRW' ? undefined : Number(data.conversionRate),
       tagNames: selectedTags,
     };
     try {
@@ -124,6 +129,17 @@ export function TransactionFormModal() {
             </select>
           </div>
         </div>
+
+        {isForeignCurrency && (
+          <Input type="number" step="0.0001" min="0.01"
+            label={`${t('conversionRate')} (1 ${originalCurrency} = ? KRW)`}
+            error={errors.conversionRate?.message}
+            data-testid="tx-conversion-rate"
+            {...register('conversionRate', {
+              required: t('conversionRateRequired'),
+              min: { value: 0.01, message: t('conversionRateRequired') },
+            })} />
+        )}
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('category')}</label>
