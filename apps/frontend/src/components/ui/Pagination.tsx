@@ -14,23 +14,23 @@ export function Pagination({ page, totalPages, totalElements, onPageChange, tota
   if (totalPages <= 1 && totalElements === 0) return null;
 
   return (
-    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400" data-testid="pagination">
-      <span data-testid="pagination-total">{totalLabel}: {totalElements.toLocaleString()}</span>
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm text-gray-600 dark:border-gray-700/60 dark:text-gray-400" data-testid="pagination">
+      <span className="font-medium" data-testid="pagination-total">{totalLabel}: {totalElements.toLocaleString()}</span>
+      <div className="flex items-center gap-3">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 0}
-          className="rounded-lg p-1.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-700"
+          className="rounded-lg p-1.5 transition-colors duration-150 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
           aria-label="Previous page"
           data-testid="pagination-prev"
         >
           <ChevronLeft size={16} />
         </button>
-        <span data-testid="pagination-page">{pageLabel} {page + 1} / {Math.max(totalPages, 1)}</span>
+        <span className="min-w-[80px] text-center tabular" data-testid="pagination-page">{pageLabel} {page + 1} / {Math.max(totalPages, 1)}</span>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page + 1 >= totalPages}
-          className="rounded-lg p-1.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-700"
+          className="rounded-lg p-1.5 transition-colors duration-150 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
           aria-label="Next page"
           data-testid="pagination-next"
         >

@@ -24,32 +24,32 @@ import { Badge } from '../components/ui/Badge';
 const TREND_WINDOW_MONTHS = 12;
 
 function TopTable({ items, type, noDataLabel, t }: { items: Transaction[]; type: 'income' | 'expense'; noDataLabel: string; t: (k: TranslationKey) => string }) {
-  if (items.length === 0) return <p className="text-sm text-gray-500 dark:text-gray-400">{noDataLabel}</p>;
+  if (items.length === 0) return <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">{noDataLabel}</p>;
   const sign = type === 'income' ? '+' : '-';
   const color = type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="border-b border-gray-100 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          <th className="py-1.5 text-left font-medium">{t('date')}</th>
-          <th className="py-1.5 text-left font-medium">{t('category')}</th>
-          <th className="py-1.5 text-left font-medium">{t('tags')}</th>
-          <th className="py-1.5 text-left font-medium">{t('memo')}</th>
-          <th className="py-1.5 text-right font-medium">{t('amount')}</th>
+        <tr className="border-b border-gray-200 dark:border-gray-700">
+          <th className="pb-3 pt-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('date')}</th>
+          <th className="pb-3 pt-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('category')}</th>
+          <th className="pb-3 pt-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('tags')}</th>
+          <th className="pb-3 pt-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('memo')}</th>
+          <th className="pb-3 pt-1 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('amount')}</th>
         </tr>
       </thead>
       <tbody>
         {items.map((tx) => (
-          <tr key={tx.id} className="border-b border-gray-50 dark:border-gray-700/50">
-            <td className="py-1.5 text-gray-600 dark:text-gray-400">{tx.transactionDate.slice(5)}</td>
-            <td className="py-1.5 text-gray-700 dark:text-gray-300">{tx.category?.name ?? '-'}</td>
-            <td className="py-1.5 text-gray-500 dark:text-gray-400">
-              <div className="flex flex-wrap gap-0.5">
-                {tx.tags.length > 0 ? tx.tags.map((tag) => <Badge key={tag.id} label={tag.name} color={tag.color} />) : '-'}
+          <tr key={tx.id} className="border-b border-gray-100 transition-colors duration-150 ease-smooth last:border-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50">
+            <td className="py-3 text-gray-600 dark:text-gray-400">{tx.transactionDate.slice(5)}</td>
+            <td className="py-3 font-medium text-gray-700 dark:text-gray-300">{tx.category?.name ?? '-'}</td>
+            <td className="py-3 text-gray-500 dark:text-gray-400">
+              <div className="flex flex-wrap gap-1">
+                {tx.tags.length > 0 ? tx.tags.map((tag) => <Badge key={tag.id} label={tag.name} color={tag.color} size="xs" />) : '-'}
               </div>
             </td>
-            <td className="py-1.5 text-gray-500 dark:text-gray-400">{tx.memo || '-'}</td>
-            <td className={`py-1.5 text-right font-medium ${color}`}>{sign}{tx.amountKrw.toLocaleString()}원</td>
+            <td className="py-3 text-gray-500 dark:text-gray-400">{tx.memo || '-'}</td>
+            <td className={`py-3 text-right font-semibold tabular-nums ${color}`}>{sign}{tx.amountKrw.toLocaleString()}원</td>
           </tr>
         ))}
       </tbody>
@@ -92,7 +92,7 @@ function MonthPickerPopover({
     <div className="relative" ref={containerRef}>
       <button
         onClick={openPicker}
-        className="rounded-lg px-2 py-1 text-2xl font-bold text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+        className="rounded-xl px-4 py-2 text-2xl font-bold text-gray-900 transition-all duration-200 ease-smooth hover:bg-gray-100 active:scale-[0.98] dark:text-white dark:hover:bg-gray-800"
         data-testid="month-picker-trigger"
       >
         {format(new Date(selectedMonth + '-01'), language === 'ko' ? 'yyyy년 M월' : 'MMMM yyyy')}
@@ -100,29 +100,29 @@ function MonthPickerPopover({
 
       {open && (
         <div
-          className="absolute left-1/2 top-full z-20 mt-2 w-64 -translate-x-1/2 rounded-xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+          className="absolute left-1/2 top-full z-20 mt-3 w-72 -translate-x-1/2 animate-scale-in rounded-xl2 border border-gray-200/80 bg-white p-4 shadow-elevate-lg dark:border-gray-700 dark:bg-gray-800 dark:shadow-elevate-lg-dark"
           data-testid="month-picker-popover"
         >
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between">
             <button
               onClick={() => setPickerYear((y) => y - 1)}
-              className="rounded-full p-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="rounded-lg p-1.5 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               aria-label="Previous year"
               data-testid="month-picker-prev-year"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
-            <span className="font-semibold text-gray-900 dark:text-white" data-testid="month-picker-year">{pickerYear}</span>
+            <span className="text-base font-bold text-gray-900 dark:text-white" data-testid="month-picker-year">{pickerYear}</span>
             <button
               onClick={() => setPickerYear((y) => y + 1)}
-              className="rounded-full p-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="rounded-lg p-1.5 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               aria-label="Next year"
               data-testid="month-picker-next-year"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-4 gap-1.5">
             {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
               const isActive = pickerYear === selYear && m === selMonthNum;
               return (
@@ -132,7 +132,7 @@ function MonthPickerPopover({
                     onSelect(`${pickerYear}-${String(m).padStart(2, '0')}`);
                     setOpen(false);
                   }}
-                  className={`rounded-lg px-2 py-1.5 text-sm ${isActive ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'}`}
+                  className={`rounded-lg px-2 py-2 text-sm font-medium transition-all duration-150 ease-smooth ${isActive ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'}`}
                   data-testid={`month-picker-month-${m}`}
                 >
                   {format(new Date(pickerYear, m - 1, 1), language === 'ko' ? 'M월' : 'MMM')}
@@ -155,8 +155,13 @@ export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [year, monthNum] = selectedMonth.split('-').map(Number);
 
-  const windowStart = format(startOfMonth(subMonths(new Date(selectedMonth + '-01'), TREND_WINDOW_MONTHS - 1)), 'yyyy-MM-dd');
-  const windowEnd = format(endOfMonth(new Date(selectedMonth + '-01')), 'yyyy-MM-dd');
+  // Always include data up to the later of the selected month or today so the
+  // trend chart never loses future months when an earlier month is clicked.
+  const today = new Date();
+  const selectedDate = new Date(selectedMonth + '-01');
+  const effectiveEnd = selectedDate > today ? selectedDate : today;
+  const windowStart = format(startOfMonth(subMonths(effectiveEnd, TREND_WINDOW_MONTHS - 1)), 'yyyy-MM-dd');
+  const windowEnd = format(endOfMonth(effectiveEnd), 'yyyy-MM-dd');
 
   const { data: page, isLoading } = useTransactions({ startDate: windowStart, endDate: windowEnd, size: 2000 });
   const transactions = useMemo(() => page?.content ?? [], [page]);
@@ -175,51 +180,60 @@ export default function DashboardPage() {
   const topExpense = monthTx.filter((tx) => tx.transactionType === 'EXPENSE').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
 
   if (isLoading && transactions.length === 0) {
-    return <div className="flex h-full items-center justify-center"><Spinner /></div>;
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner size={32} />
+          <p className="text-sm text-gray-400 dark:text-gray-500">{t('dashboard')}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6" data-testid="dashboard-page">
+    <div className="mx-auto max-w-6xl space-y-8" data-testid="dashboard-page">
       {/* 제목 */}
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('dashboard')}</h2>
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t('dashboard')}</h2>
 
       {/* 1. 월별 추이 - 전체 폭 */}
       <MonthlyTrendChart transactions={transactions} title={t('monthlyTrend')} incomeLabel={t('income')} expenseLabel={t('expense')} theme={theme} onMonthClick={setSelectedMonth} />
 
-      {/* 2. 월 선택 */}
-      <div className="flex items-center gap-3">
+      {/* 2. 월 선택 - 강조된 서브헤더 */}
+      <div className="flex items-center justify-center gap-2 rounded-xl2 border border-gray-200/60 bg-white/60 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/60">
         <button onClick={() => setSelectedMonth(format(subMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
-          className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+          className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <MonthPickerPopover selectedMonth={selectedMonth} onSelect={setSelectedMonth} language={language} />
         <button onClick={() => setSelectedMonth(format(addMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
-          className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+          className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
 
       {/* 3. 요약 카드 */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <MonthlySummaryCard title={t('totalIncome')} amount={income} type="income" />
         <MonthlySummaryCard title={t('totalExpense')} amount={expense} type="expense" />
         <MonthlySummaryCard title={t('balance')} amount={balance} type="balance" />
       </div>
 
       {/* 4. 달력 */}
-      <TransactionCalendar transactions={monthTx} yearMonth={selectedMonth} t={t} />
+      <section>
+        <TransactionCalendar transactions={monthTx} yearMonth={selectedMonth} t={t} />
+      </section>
 
       {/* 5. Top 수입/지출 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">{t('topIncome')}</h3>
+          <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">{t('topIncome')}</h3>
           <TopTable items={topIncome} type="income" noDataLabel={t('noIncomeThisMonth')} t={t} />
         </Card>
         <Card>
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 dark:text-white">{t('topExpense')}</h3>
-            <button onClick={() => navigate('/transactions')} className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-              {t('viewAll')}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{t('topExpense')}</h3>
+            <button onClick={() => navigate('/transactions')} className="text-sm font-medium text-brand-600 transition-colors duration-150 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
+              {t('viewAll')} →
             </button>
           </div>
           <TopTable items={topExpense} type="expense" noDataLabel={t('noExpensesThisMonth')} t={t} />

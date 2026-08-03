@@ -1,8 +1,14 @@
-export function Spinner() {
+interface Props {
+  size?: number;
+  className?: string;
+}
+
+export function Spinner({ size = 24, className = '' }: Props) {
   return (
     <div
       data-testid="spinner"
-      className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+      style={{ width: size, height: size }}
+      className={`animate-spin rounded-full border-2 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-400 ${className}`}
     />
   );
 }

@@ -35,14 +35,14 @@ function ToastItem({ toast }: { toast: Toast }) {
   return (
     <div
       role="alert"
-      className={`flex w-80 items-start gap-2 rounded-lg border px-4 py-3 shadow-lg ${TOAST_STYLES[toast.type]}`}
+      className={`flex w-80 items-start gap-3 rounded-xl2 border px-4 py-3 shadow-elevate-lg animate-slide-in-right dark:shadow-elevate-lg-dark ${TOAST_STYLES[toast.type]}`}
       data-testid={`toast-${toast.type}`}
     >
       <Icon size={18} className="mt-0.5 shrink-0" />
-      <p className="flex-1 text-sm">{toast.message}</p>
+      <p className="flex-1 text-sm leading-snug">{toast.message}</p>
       <button
         onClick={() => removeToast(toast.id)}
-        className="shrink-0 opacity-70 hover:opacity-100"
+        className="shrink-0 rounded-md p-0.5 opacity-60 transition-opacity hover:opacity-100"
         aria-label="Close"
         data-testid={`toast-close-${toast.id}`}
       >

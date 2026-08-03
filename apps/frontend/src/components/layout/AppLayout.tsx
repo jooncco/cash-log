@@ -16,9 +16,9 @@ export function AppLayout() {
   }, [theme]);
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen flex-col bg-gray-50/80 dark:bg-gray-950">
       <Header />
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 overflow-auto px-6 py-8">
         <Outlet />
       </main>
       <TransactionFormModal />

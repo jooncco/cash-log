@@ -20,7 +20,8 @@ export function CategoryFormModal() {
   const language = useSessionStore((s) => s.language);
   const t = useTranslation(language);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>();
+  const currentColor = watch('color') ?? '#3b82f6';
 
   useEffect(() => {
     if (categoryModalOpen) {
@@ -48,15 +49,32 @@ export function CategoryFormModal() {
       onClose={closeCategoryModal}
       title={editingCategory ? t('editCategory') : t('addCategory')}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" data-testid="category-form">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" data-testid="category-form">
         <Input label={t('categoryName')} placeholder={t('categoryNamePlaceholder')}
           error={errors.name?.message}
           {...register('name', { required: t('categoryNameRequired') })} />
-        <div className="flex flex-col gap-1">
+
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('color')}</label>
-          <input type="color" {...register('color')} className="h-10 w-20 cursor-pointer rounded border-0" />
+          <div className="flex items-center gap-3">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-gray-300 shadow-sm dark:border-gray-600">
+              <input
+                type="color"
+                {...register('color')}
+                className="absolute -inset-1 h-12 w-12 cursor-pointer border-0"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-6 w-6 rounded-full ring-2 ring-white shadow-sm dark:ring-gray-800"
+                style={{ backgroundColor: currentColor }}
+              />
+              <span className="text-sm text-gray-500 dark:text-gray-400">{currentColor}</span>
+            </div>
+          </div>
         </div>
-        <div className="flex justify-end gap-2 pt-2">
+
+        <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
           <Button variant="secondary" type="button" onClick={closeCategoryModal}>{t('cancel')}</Button>
           <Button type="submit" data-testid="category-submit">{editingCategory ? t('update') : t('save')}</Button>
         </div>

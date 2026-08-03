@@ -9,6 +9,7 @@ import { TransactionList } from '../components/TransactionList';
 import { TransactionFilters } from '../components/TransactionFilters';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
 import type { Transaction, TransactionFilterParams } from '../types';
 
@@ -52,15 +53,15 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4" data-testid="transactions-page">
+    <div className="mx-auto max-w-6xl space-y-6" data-testid="transactions-page">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('transactions')}</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t('transactions')}</h2>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => openExportDialog(filters.startDate, filters.endDate)} data-testid="export-btn">
-            <Download size={16} className="mr-1 inline" /> {t('export')}
+          <Button variant="ghost" size="sm" onClick={() => openExportDialog(filters.startDate, filters.endDate)} data-testid="export-btn">
+            <Download size={16} /> {t('export')}
           </Button>
-          <Button onClick={() => openTransactionModal()} data-testid="add-tx-btn">
-            <Plus size={16} className="mr-1 inline" /> {t('addTransaction')}
+          <Button size="sm" onClick={() => openTransactionModal()} data-testid="add-tx-btn">
+            <Plus size={16} /> {t('addTransaction')}
           </Button>
         </div>
       </div>
@@ -73,24 +74,25 @@ export default function TransactionsPage() {
       />
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Spinner /></div>
+        <div className="flex justify-center py-16"><Spinner /></div>
       ) : (
-        <TransactionList
-          transactions={transactions}
-          onEdit={(tx) => openTransactionModal(tx)}
-          onDelete={handleDelete}
-          t={t}
-        />
+        <Card noPadding>
+          <TransactionList
+            transactions={transactions}
+            onEdit={(tx) => openTransactionModal(tx)}
+            onDelete={handleDelete}
+            t={t}
+          />
+          <Pagination
+            page={page?.page ?? 0}
+            totalPages={page?.totalPages ?? 0}
+            totalElements={page?.totalElements ?? 0}
+            onPageChange={(p) => setTransactionFilters({ page: p })}
+            totalLabel={t('totalCount')}
+            pageLabel={t('page')}
+          />
+        </Card>
       )}
-
-      <Pagination
-        page={page?.page ?? 0}
-        totalPages={page?.totalPages ?? 0}
-        totalElements={page?.totalElements ?? 0}
-        onPageChange={(p) => setTransactionFilters({ page: p })}
-        totalLabel={t('totalCount')}
-        pageLabel={t('page')}
-      />
     </div>
   );
 }

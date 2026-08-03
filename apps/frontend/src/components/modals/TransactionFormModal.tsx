@@ -22,6 +22,9 @@ interface FormData {
   memo: string;
 }
 
+const selectClassName =
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-all duration-150 ease-smooth focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400';
+
 export function TransactionFormModal() {
   const { transactionModalOpen, editingTransaction, closeTransactionModal } = useUIStore();
   const createTransaction = useCreateTransaction();
@@ -97,15 +100,16 @@ export function TransactionFormModal() {
       open={transactionModalOpen}
       onClose={closeTransactionModal}
       title={editingTransaction ? t('editTransaction') : t('addTransaction')}
+      size="lg"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" data-testid="transaction-form">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" data-testid="transaction-form">
         <Input type="date" label={t('date')} error={errors.transactionDate?.message}
           {...register('transactionDate', { required: t('dateRequired') })} />
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('type')}</label>
           <select {...register('transactionType', { required: t('typeRequired') })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className={selectClassName}
             data-testid="tx-type-select">
             <option value="EXPENSE">{t('expense')}</option>
             <option value="INCOME">{t('income')}</option>
@@ -118,10 +122,10 @@ export function TransactionFormModal() {
               error={errors.originalAmount?.message}
               {...register('originalAmount', { required: t('amountRequired'), min: 0 })} />
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('currency')}</label>
             <select {...register('originalCurrency')}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+              className={selectClassName}>
               <option value="KRW">KRW</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -141,10 +145,10 @@ export function TransactionFormModal() {
             })} />
         )}
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('category')}</label>
           <select {...register('categoryId', { required: t('categoryRequired') })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className={selectClassName}
             data-testid="tx-category-select">
             <option value="">{t('selectCategory')}</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -152,26 +156,28 @@ export function TransactionFormModal() {
           {errors.categoryId && <span className="text-xs text-red-500">{errors.categoryId.message}</span>}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('tags')}</label>
-          <div className="flex flex-wrap gap-1 mb-1">
-            {selectedTags.map((name) => (
-              <Badge key={name} label={name} onRemove={() => setSelectedTags(selectedTags.filter((n) => n !== name))} />
-            ))}
-          </div>
+          {selectedTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedTags.map((name) => (
+                <Badge key={name} label={name} onRemove={() => setSelectedTags(selectedTags.filter((n) => n !== name))} />
+              ))}
+            </div>
+          )}
           <input value={tagInput} onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleTagKeyDown}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
             placeholder={t('tagPlaceholder')}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className={selectClassName}
             data-testid="tx-tag-input" />
           {tagInput && suggestions.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
+            <div className="mt-1 flex flex-wrap gap-1.5">
               {suggestions.slice(0, 5).map((tag) => (
                 <button key={tag.id} type="button"
                   onClick={() => { setSelectedTags([...selectedTags, tag.name]); setTagInput(''); }}
-                  className="rounded-full bg-gray-100 px-2 py-0.5 text-xs hover:bg-gray-200 dark:bg-gray-700">
+                  className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-700 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-800 dark:hover:bg-brand-900/20 dark:hover:text-brand-300">
                   {tag.name}
                 </button>
               ))}
@@ -181,7 +187,7 @@ export function TransactionFormModal() {
 
         <Input label={t('memoOptional')} {...register('memo')} data-testid="tx-memo" />
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 mt-1 dark:border-gray-700">
           <Button variant="secondary" type="button" onClick={closeTransactionModal}>{t('cancel')}</Button>
           <Button type="submit" data-testid="tx-submit">{editingTransaction ? t('update') : t('save')}</Button>
         </div>

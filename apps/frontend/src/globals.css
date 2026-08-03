@@ -2,12 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white;
+  @apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-white;
+  font-feature-settings: 'tnum' 1;
 }
 
 .dark {
   color-scheme: dark;
+}
+
+/* Thin, unobtrusive scrollbars that still respect the theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgb(71 85 105) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-gray-300 dark:bg-gray-600;
+}
+
+/* Tabular numbers everywhere money/dates are rendered */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 /* All select dropdowns: consistent arrow with padding */

@@ -16,7 +16,8 @@ const DAY_KEYS: TranslationKey[] = ['sunday', 'monday', 'tuesday', 'wednesday', 
 function heatBg(net: number, max: number): string | undefined {
   if (net === 0 || max === 0) return undefined;
   const ratio = Math.min(Math.abs(net) / max, 1);
-  const a = (ratio * 0.3 + 0.05).toFixed(2);
+  // 다크모드에서도 가독성을 위해 alpha를 좀 더 낮춤 (0.25 ~ 0.55)
+  const a = (ratio * 0.3 + 0.25).toFixed(2);
   return net > 0 ? `rgba(34,197,94,${a})` : `rgba(239,68,68,${a})`;
 }
 
@@ -27,7 +28,6 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
   const theme = useSessionStore((s) => s.theme);
 
   const isDark = theme === 'dark';
-  const tipBg = isDark ? '#1f2937' : '#ffffff';
   const tipBorder = isDark ? '#4b5563' : '#d1d5db';
 
   const [year, month] = yearMonth.split('-').map(Number);
@@ -69,10 +69,21 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
   };
 
   return (
-    <Card className="!p-0">
+    <>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.85;
+          }
+        }
+      `}</style>
+      <Card noPadding>
       <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
         {DAY_KEYS.map((k) => (
-          <div key={k} className="py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">{t(k)}</div>
+          <div key={k} className="py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(k)}</div>
         ))}
       </div>
       <div className="grid grid-cols-7" data-testid="calendar-grid">
@@ -90,8 +101,13 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
           return (
             <div
               key={day}
-              className={`relative flex h-20 cursor-pointer flex-col justify-between border-b border-r border-gray-100 p-1.5 transition-all hover:brightness-90 dark:border-gray-700/50 dark:hover:brightness-125 ${isToday ? 'ring-2 ring-inset ring-blue-400' : ''}`}
-              style={bg ? { backgroundColor: bg } : undefined}
+              className={`relative flex h-20 cursor-pointer flex-col justify-between border-b border-r border-gray-100 p-1.5 transition-all duration-200 ease-in-out hover:scale-105 hover:brightness-90 hover:z-10 dark:border-gray-700/50 dark:hover:brightness-125 ${isToday ? 'ring-2 ring-inset ring-blue-500 dark:ring-blue-400' : ''}`}
+              style={bg ? { 
+                backgroundColor: bg,
+                animation: isToday ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined
+              } : isToday ? {
+                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+              } : undefined}
               onClick={() => handleClick(day)}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -101,19 +117,23 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
               onMouseLeave={() => { setHoverDate(null); setTipPos(null); }}
               data-testid={`cal-day-${day}`}
             >
-              <div className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>{day}</div>
+              <div className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-300 font-bold' : bg ? 'text-white dark:text-white font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>{day}</div>
 
               <div className="flex flex-col items-end gap-px">
                 {[...incomes, ...expenses].slice(0, 3).map((tx) => (
-                  <div key={tx.id} className={`truncate text-[9px] ${tx.transactionType === 'INCOME' ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  <div key={tx.id} className={`truncate text-[9px] font-medium ${bg ? 'text-white/90 dark:text-white/90' : tx.transactionType === 'INCOME' ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-300'}`}>
                     {tx.transactionType === 'INCOME' ? '+' : '-'}{tx.amountKrw.toLocaleString()}
                   </div>
                 ))}
                 {txs.length > 3 && (
-                  <div className="text-[9px] text-gray-400">...</div>
+                  <div className={`text-[9px] ${bg ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'}`}>...</div>
                 )}
               </div>
 
+              {/* 거래가 있는 날에 작은 인디케이터 점 추가 */}
+              {txs.length > 0 && (
+                <div className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shadow-sm" />
+              )}
             </div>
           );
         })}
@@ -122,8 +142,17 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
       {/* Tooltip rendered outside grid to avoid z-index issues */}
       {hoverDate && tipPos && (dailyMap.get(hoverDate)?.length ?? 0) > 0 && (
         <div
-          className="fixed z-[9999] w-56 rounded-lg p-2 shadow-xl"
-          style={{ background: tipBg, border: `1px solid ${tipBorder}`, left: tipPos.x, top: tipPos.y, transform: 'translateX(-50%)' }}
+          className="fixed z-[9999] w-56 rounded-xl p-3 shadow-2xl backdrop-blur-sm"
+          style={{
+            background: isDark 
+              ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' 
+              : 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
+            border: `1px solid ${tipBorder}`,
+            left: tipPos.x,
+            top: tipPos.y,
+            transform: 'translateX(-50%)',
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+          }}
         >
           <div
             className="absolute -top-[10px] left-1/2 -translate-x-1/2"
@@ -131,16 +160,22 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
           />
           <div
             className="absolute -top-2 left-1/2 -translate-x-1/2"
-            style={{ width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: `9px solid ${tipBg}` }}
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: '7px solid transparent',
+              borderRight: '7px solid transparent',
+              borderBottom: isDark ? '9px solid #1f2937' : '9px solid #ffffff'
+            }}
           />
-          <div className="mb-1 text-[11px] font-semibold text-gray-800 dark:text-gray-200">{hoverDate}</div>
-          <ul className="max-h-40 space-y-0.5 overflow-y-auto">
+          <div className="mb-2 text-xs font-semibold text-gray-800 dark:text-gray-200">{hoverDate}</div>
+          <ul className="max-h-40 space-y-1 overflow-y-auto">
             {dailyMap.get(hoverDate)!.map((tx) => (
-              <li key={tx.id} className="flex justify-between text-[10px]">
+              <li key={tx.id} className="flex justify-between gap-2 text-[10px]">
                 <span className="truncate text-gray-600 dark:text-gray-400">
                   {tx.category?.name ?? ''} {tx.memo ? `· ${tx.memo}` : ''}
                 </span>
-                <span className={tx.transactionType === 'INCOME' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>
+                <span className={tx.transactionType === 'INCOME' ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium'}>
                   {tx.transactionType === 'INCOME' ? '+' : '-'}{tx.amountKrw.toLocaleString()}
                 </span>
               </li>
@@ -149,5 +184,6 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
         </div>
       )}
     </Card>
+    </>
   );
 }
