@@ -100,7 +100,7 @@ function MonthPickerPopover({
 
       {open && (
         <div
-          className="absolute left-1/2 top-full z-20 mt-3 w-72 -translate-x-1/2 animate-scale-in rounded-xl2 border border-gray-200/80 bg-white p-4 shadow-elevate-lg dark:border-gray-700 dark:bg-gray-800 dark:shadow-elevate-lg-dark"
+          className="absolute left-1/2 top-full z-50 mt-3 w-72 -translate-x-1/2 animate-scale-in rounded-xl2 border border-gray-200 bg-white p-4 shadow-elevate-lg dark:border-gray-700 dark:bg-gray-800 dark:shadow-elevate-lg-dark"
           data-testid="month-picker-popover"
         >
           <div className="mb-3 flex items-center justify-between">
@@ -199,7 +199,7 @@ export default function DashboardPage() {
       <MonthlyTrendChart transactions={transactions} title={t('monthlyTrend')} incomeLabel={t('income')} expenseLabel={t('expense')} theme={theme} onMonthClick={setSelectedMonth} />
 
       {/* 2. 월 선택 - 강조된 서브헤더 */}
-      <div className="flex items-center justify-center gap-2 rounded-xl2 border border-gray-200/60 bg-white/60 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/60">
+      <div className="relative z-30 flex items-center justify-center gap-2 rounded-xl2 border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
         <button onClick={() => setSelectedMonth(format(subMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
           className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>

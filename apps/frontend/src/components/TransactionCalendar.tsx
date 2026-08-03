@@ -117,16 +117,16 @@ export function TransactionCalendar({ transactions, yearMonth, t }: Props) {
               onMouseLeave={() => { setHoverDate(null); setTipPos(null); }}
               data-testid={`cal-day-${day}`}
             >
-              <div className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-300 font-bold' : bg ? 'text-white dark:text-white font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>{day}</div>
+              <div className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-300 font-bold' : bg ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>{day}</div>
 
               <div className="flex flex-col items-end gap-px">
                 {[...incomes, ...expenses].slice(0, 3).map((tx) => (
-                  <div key={tx.id} className={`truncate text-[9px] font-medium ${bg ? 'text-white/90 dark:text-white/90' : tx.transactionType === 'INCOME' ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-300'}`}>
+                  <div key={tx.id} className={`truncate text-[9px] font-semibold ${bg ? (tx.transactionType === 'INCOME' ? 'text-green-900 dark:text-white/90' : 'text-red-900 dark:text-white/90') : tx.transactionType === 'INCOME' ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-300'}`}>
                     {tx.transactionType === 'INCOME' ? '+' : '-'}{tx.amountKrw.toLocaleString()}
                   </div>
                 ))}
                 {txs.length > 3 && (
-                  <div className={`text-[9px] ${bg ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'}`}>...</div>
+                  <div className={`text-[9px] ${bg ? 'text-gray-800 dark:text-white/70' : 'text-gray-400 dark:text-gray-500'}`}>...</div>
                 )}
               </div>
 
