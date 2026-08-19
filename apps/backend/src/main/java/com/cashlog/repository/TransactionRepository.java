@@ -43,4 +43,35 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
         @Param("endDate") LocalDate endDate,
         @Param("type") TransactionType type
     );
+
+    /**
+     * Per-month income/expense totals aggregated in the database, used by the
+     * monthly trend chart. Returns rows of
+     * {@code [year, month, transactionType, sumAmountKrw]}.
+     */
+    @Query("SELECT YEAR(t.transactionDate), MONTH(t.transactionDate), t.transactionType, SUM(t.amountKrw) " +
+           "FROM Transaction t WHERE t.transactionDate BETWEEN :startDate AND :endDate " +
+           "GROUP BY YEAR(t.transactionDate), MONTH(t.transactionDate), t.transactionType " +
+           "ORDER BY YEAR(t.transactionDate), MONTH(t.transactionDate)")
+    List<Object[]> aggregateMonthlyTotals(
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
+    );
+
+    /**
+     * Income/expense totals for everything strictly before {@code date}, used
+     * as the opening balance of the cumulative savings line. Returns rows of
+     * {@code [transactionType, sumAmountKrw]}.
+     */
+    @Query("SELECT t.transactionType, SUM(t.amountKrw) FROM Transaction t " +
+           "WHERE t.transactionDate < :date GROUP BY t.transactionType")
+    List<Object[]> aggregateTotalsBefore(@Param("date") LocalDate date);
+
+    /** Earliest recorded transaction date, or {@code null} when there is no data. */
+    @Query("SELECT MIN(t.transactionDate) FROM Transaction t")
+    LocalDate findEarliestTransactionDate();
+
+    /** Latest recorded transaction date, or {@code null} when there is no data. */
+    @Query("SELECT MAX(t.transactionDate) FROM Transaction t")
+    LocalDate findLatestTransactionDate();
 }

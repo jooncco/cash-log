@@ -64,10 +64,21 @@ export interface BreakdownItem {
   percentage: number;
 }
 
-export interface MonthlyTrendData {
+/** One point of `/api/analytics/monthly-trend`; `month` is `yyyy-MM`. */
+export interface MonthlyTrendPoint {
   month: string;
-  income: number;
-  expense: number;
+  totalIncome: number;
+  totalExpense: number;
+  netAmount: number;
+  /** Running balance since the first ever transaction, not just this range. */
+  cumulativeSavings: number;
+  /** False when the month holds no transaction at all (vs. netting to zero). */
+  hasTransactions: boolean;
+}
+
+export interface DateRange {
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface SessionPreferences {

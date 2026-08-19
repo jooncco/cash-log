@@ -38,6 +38,18 @@ class TransactionRepositoryTest {
         return categoryRepository.save(Category.builder().name(name).color("#3B82F6").build());
     }
 
+    private Transaction tx(LocalDate date, TransactionType type, String amount, Category category) {
+        BigDecimal value = new BigDecimal(amount);
+        return Transaction.builder()
+                .transactionDate(date)
+                .transactionType(type)
+                .originalAmount(value)
+                .originalCurrency("KRW")
+                .amountKrw(value)
+                .category(category)
+                .build();
+    }
+
     @Test
     void findByTransactionDateBetween_Success() {
         Transaction transaction = Transaction.builder()
@@ -93,6 +105,60 @@ class TransactionRepositoryTest {
 
         assertNotNull(sum);
         assertEquals(0, new BigDecimal("30000").compareTo(sum));
+    }
+
+    @Test
+    void aggregateMonthlyTotals_groupsByYearMonthAndType() {
+        Category category = category("Food");
+        transactionRepository.saveAll(List.of(
+                tx(LocalDate.of(2024, 1, 10), TransactionType.EXPENSE, "10000", category),
+                tx(LocalDate.of(2024, 1, 20), TransactionType.EXPENSE, "20000", category),
+                tx(LocalDate.of(2024, 1, 25), TransactionType.INCOME, "50000", category),
+                tx(LocalDate.of(2024, 2, 3), TransactionType.INCOME, "70000", category),
+                // Outside the queried range.
+                tx(LocalDate.of(2024, 3, 3), TransactionType.INCOME, "90000", category)
+        ));
+
+        List<Object[]> rows = transactionRepository.aggregateMonthlyTotals(
+                LocalDate.of(2024, 1, 1), LocalDate.of(2024, 2, 29));
+
+        assertEquals(3, rows.size());
+        Object[] januaryExpense = rows.stream()
+                .filter(r -> ((Number) r[1]).intValue() == 1 && r[2] == TransactionType.EXPENSE)
+                .findFirst().orElseThrow();
+        assertEquals(2024, ((Number) januaryExpense[0]).intValue());
+        assertEquals(0, new BigDecimal("30000").compareTo((BigDecimal) januaryExpense[3]));
+    }
+
+    @Test
+    void aggregateTotalsBefore_onlyCountsEarlierTransactions() {
+        Category category = category("Food");
+        transactionRepository.saveAll(List.of(
+                tx(LocalDate.of(2023, 12, 31), TransactionType.INCOME, "500000", category),
+                tx(LocalDate.of(2023, 12, 31), TransactionType.EXPENSE, "200000", category),
+                // On the boundary date, so excluded.
+                tx(LocalDate.of(2024, 1, 1), TransactionType.INCOME, "999999", category)
+        ));
+
+        List<Object[]> rows = transactionRepository.aggregateTotalsBefore(LocalDate.of(2024, 1, 1));
+
+        assertEquals(2, rows.size());
+        BigDecimal income = rows.stream()
+                .filter(r -> r[0] == TransactionType.INCOME)
+                .map(r -> (BigDecimal) r[1]).findFirst().orElseThrow();
+        assertEquals(0, new BigDecimal("500000").compareTo(income));
+    }
+
+    @Test
+    void findEarliestAndLatestTransactionDate_returnFullRecordedRange() {
+        Category category = category("Food");
+        transactionRepository.saveAll(List.of(
+                tx(LocalDate.of(2023, 5, 4), TransactionType.EXPENSE, "1000", category),
+                tx(LocalDate.of(2024, 7, 9), TransactionType.INCOME, "2000", category)
+        ));
+
+        assertEquals(LocalDate.of(2023, 5, 4), transactionRepository.findEarliestTransactionDate());
+        assertEquals(LocalDate.of(2024, 7, 9), transactionRepository.findLatestTransactionDate());
     }
 
     @Test

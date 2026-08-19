@@ -2,6 +2,7 @@ package com.cashlog.service;
 
 import com.cashlog.dto.response.BreakdownItemDTO;
 import com.cashlog.dto.response.MonthlySummaryDTO;
+import com.cashlog.dto.response.MonthlyTrendPointDTO;
 import com.cashlog.entity.Category;
 import com.cashlog.entity.Tag;
 import com.cashlog.entity.Transaction;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,6 +51,70 @@ public class AnalyticsService {
                 .totalExpense(totalExpense)
                 .netAmount(netAmount)
                 .build();
+    }
+
+    /**
+     * Per-month income/expense/net totals plus the running savings balance,
+     * for the trend chart.
+     *
+     * <p>Both bounds are optional: a {@code null} bound falls back to the
+     * earliest/latest recorded transaction date, so calling this with no
+     * arguments returns the full history. Months with no transactions inside
+     * the resolved range are emitted as zero rows so the chart keeps a
+     * continuous, evenly-spaced x-axis.
+     */
+    public List<MonthlyTrendPointDTO> getMonthlyTrend(LocalDate startDate, LocalDate endDate) {
+        LocalDate resolvedStart = startDate != null ? startDate : transactionRepository.findEarliestTransactionDate();
+        LocalDate resolvedEnd = endDate != null ? endDate : transactionRepository.findLatestTransactionDate();
+        if (resolvedStart == null || resolvedEnd == null || resolvedStart.isAfter(resolvedEnd)) {
+            return List.of();
+        }
+
+        Map<YearMonth, BigDecimal[]> totals = new LinkedHashMap<>();
+        for (Object[] row : transactionRepository.aggregateMonthlyTotals(resolvedStart, resolvedEnd)) {
+            YearMonth key = YearMonth.of(((Number) row[0]).intValue(), ((Number) row[1]).intValue());
+            TransactionType type = (TransactionType) row[2];
+            BigDecimal sum = row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO;
+            BigDecimal[] bucket = totals.computeIfAbsent(key, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            int slot = type == TransactionType.INCOME ? 0 : 1;
+            bucket[slot] = bucket[slot].add(sum);
+        }
+
+        // Savings accumulate from the very first record, not from the queried
+        // range, so the level stays comparable when the range changes.
+        BigDecimal running = netAmountBefore(resolvedStart);
+
+        List<MonthlyTrendPointDTO> points = new ArrayList<>();
+        YearMonth cursor = YearMonth.from(resolvedStart);
+        YearMonth last = YearMonth.from(resolvedEnd);
+        while (!cursor.isAfter(last)) {
+            BigDecimal[] bucket = totals.get(cursor);
+            boolean hasTransactions = bucket != null;
+            if (bucket == null) bucket = new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO};
+            BigDecimal net = bucket[0].subtract(bucket[1]);
+            running = running.add(net);
+            points.add(MonthlyTrendPointDTO.builder()
+                    .month(cursor.toString())
+                    .totalIncome(bucket[0])
+                    .totalExpense(bucket[1])
+                    .netAmount(net)
+                    .cumulativeSavings(running)
+                    .hasTransactions(hasTransactions)
+                    .build());
+            cursor = cursor.plusMonths(1);
+        }
+        return points;
+    }
+
+    /** Net (income - expense) of everything recorded before {@code date}. */
+    private BigDecimal netAmountBefore(LocalDate date) {
+        BigDecimal net = BigDecimal.ZERO;
+        for (Object[] row : transactionRepository.aggregateTotalsBefore(date)) {
+            TransactionType type = (TransactionType) row[0];
+            BigDecimal sum = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+            net = type == TransactionType.INCOME ? net.add(sum) : net.subtract(sum);
+        }
+        return net;
     }
 
     /**

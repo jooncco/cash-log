@@ -73,6 +73,102 @@ class AnalyticsServiceTest {
     }
 
     @Test
+    void getMonthlyTrend_fillsGapMonths_andComputesNet() {
+        when(transactionRepository.aggregateMonthlyTotals(any(), any())).thenReturn(List.of(
+                new Object[]{2024, 1, TransactionType.INCOME, new BigDecimal("100000")},
+                new Object[]{2024, 1, TransactionType.EXPENSE, new BigDecimal("40000")},
+                new Object[]{2024, 3, TransactionType.EXPENSE, new BigDecimal("25000")}
+        ));
+        when(transactionRepository.aggregateTotalsBefore(any())).thenReturn(List.of());
+
+        var points = analyticsService.getMonthlyTrend(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31));
+
+        assertEquals(3, points.size());
+        assertEquals("2024-01", points.get(0).getMonth());
+        assertEquals(0, new BigDecimal("60000").compareTo(points.get(0).getNetAmount()));
+
+        // February has no transactions but must still appear as a zero point.
+        assertEquals("2024-02", points.get(1).getMonth());
+        assertEquals(0, BigDecimal.ZERO.compareTo(points.get(1).getTotalIncome()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(points.get(1).getNetAmount()));
+
+        assertEquals("2024-03", points.get(2).getMonth());
+        assertEquals(0, new BigDecimal("-25000").compareTo(points.get(2).getNetAmount()));
+    }
+
+    @Test
+    void getMonthlyTrend_flagsMonthsWithoutTransactions() {
+        when(transactionRepository.aggregateMonthlyTotals(any(), any())).thenReturn(List.<Object[]>of(
+                new Object[]{2024, 1, TransactionType.INCOME, new BigDecimal("100000")},
+                new Object[]{2024, 3, TransactionType.EXPENSE, new BigDecimal("25000")}
+        ));
+        when(transactionRepository.aggregateTotalsBefore(any())).thenReturn(List.of());
+
+        var points = analyticsService.getMonthlyTrend(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31));
+
+        assertTrue(points.get(0).getHasTransactions());
+        assertFalse(points.get(1).getHasTransactions());
+        assertTrue(points.get(2).getHasTransactions());
+    }
+
+    @Test
+    void getMonthlyTrend_accumulatesSavings_carryingGapMonthsForward() {
+        when(transactionRepository.aggregateMonthlyTotals(any(), any())).thenReturn(List.of(
+                new Object[]{2024, 1, TransactionType.INCOME, new BigDecimal("100000")},
+                new Object[]{2024, 1, TransactionType.EXPENSE, new BigDecimal("40000")},
+                new Object[]{2024, 3, TransactionType.EXPENSE, new BigDecimal("25000")}
+        ));
+        when(transactionRepository.aggregateTotalsBefore(any())).thenReturn(List.of());
+
+        var points = analyticsService.getMonthlyTrend(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31));
+
+        assertEquals(0, new BigDecimal("60000").compareTo(points.get(0).getCumulativeSavings()));
+        // A month without transactions keeps the previous level.
+        assertEquals(0, new BigDecimal("60000").compareTo(points.get(1).getCumulativeSavings()));
+        assertEquals(0, new BigDecimal("35000").compareTo(points.get(2).getCumulativeSavings()));
+    }
+
+    @Test
+    void getMonthlyTrend_seedsSavingsWithBalanceBeforeRange() {
+        when(transactionRepository.aggregateMonthlyTotals(any(), any())).thenReturn(List.<Object[]>of(
+                new Object[]{2024, 5, TransactionType.INCOME, new BigDecimal("10000")}
+        ));
+        when(transactionRepository.aggregateTotalsBefore(LocalDate.of(2024, 5, 1))).thenReturn(List.<Object[]>of(
+                new Object[]{TransactionType.INCOME, new BigDecimal("500000")},
+                new Object[]{TransactionType.EXPENSE, new BigDecimal("200000")}
+        ));
+
+        var points = analyticsService.getMonthlyTrend(LocalDate.of(2024, 5, 1), LocalDate.of(2024, 5, 31));
+
+        assertEquals(1, points.size());
+        assertEquals(0, new BigDecimal("10000").compareTo(points.get(0).getNetAmount()));
+        // 300,000 carried in from before the range + 10,000 earned in May.
+        assertEquals(0, new BigDecimal("310000").compareTo(points.get(0).getCumulativeSavings()));
+    }
+
+    @Test
+    void getMonthlyTrend_withoutBounds_usesFullRecordedRange() {
+        when(transactionRepository.findEarliestTransactionDate()).thenReturn(LocalDate.of(2023, 11, 20));
+        when(transactionRepository.findLatestTransactionDate()).thenReturn(LocalDate.of(2024, 1, 5));
+        when(transactionRepository.aggregateMonthlyTotals(LocalDate.of(2023, 11, 20), LocalDate.of(2024, 1, 5)))
+                .thenReturn(List.of());
+        when(transactionRepository.aggregateTotalsBefore(any())).thenReturn(List.of());
+
+        var points = analyticsService.getMonthlyTrend(null, null);
+
+        assertEquals(List.of("2023-11", "2023-12", "2024-01"),
+                points.stream().map(p -> p.getMonth()).toList());
+    }
+
+    @Test
+    void getMonthlyTrend_returnsEmpty_whenNoTransactionsExist() {
+        when(transactionRepository.findEarliestTransactionDate()).thenReturn(null);
+        when(transactionRepository.findLatestTransactionDate()).thenReturn(null);
+
+        assertTrue(analyticsService.getMonthlyTrend(null, null).isEmpty());
+    }
+
+    @Test
     void getCategoryBreakdown_groupsByCategory_andComputesPercentage() {
         Category food = Category.builder().id(1L).name("Food").color("#ff0000").build();
         Category transport = Category.builder().id(2L).name("Transport").color("#00ff00").build();

@@ -2,26 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { useTransactions } from '../lib/queries/transactions';
-import { useMonthlySummary } from '../lib/queries/analytics';
+import { useMonthlySummary, useMonthlyTrend } from '../lib/queries/analytics';
 import { useSessionStore } from '../lib/stores/sessionStore';
 import { useTranslation } from '../lib/i18n';
 import { MonthlySummaryCard } from '../components/MonthlySummaryCard';
 import { CategoryPieChart } from '../components/CategoryPieChart';
 import { TagPieChart } from '../components/TagPieChart';
 import { MonthlyTrendChart } from '../components/MonthlyTrendChart';
+import { TrendRangeSelector } from '../components/TrendRangeSelector';
 import { TransactionCalendar } from '../components/TransactionCalendar';
 import { Card } from '../components/ui/Card';
+import { SectionHeading } from '../components/ui/SectionHeading';
 import { Spinner } from '../components/ui/Spinner';
-import type { Transaction } from '../types';
+import type { DateRange, Transaction } from '../types';
 
 import type { Language, TranslationKey } from '../lib/i18n';
 import { Badge } from '../components/ui/Badge';
-
-// How many months of transaction history to pull (bounded, DB-filtered) to
-// feed the trend chart, calendar and top-income/expense tables. This keeps
-// those views working with real transaction records without falling back to
-// fetching the entire, unbounded table.
-const TREND_WINDOW_MONTHS = 12;
 
 function TopTable({ items, type, noDataLabel, t }: { items: Transaction[]; type: 'income' | 'expense'; noDataLabel: string; t: (k: TranslationKey) => string }) {
   if (items.length === 0) return <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">{noDataLabel}</p>;
@@ -152,25 +148,26 @@ export default function DashboardPage() {
   const t = useTranslation(language);
   const navigate = useNavigate();
 
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
+  // An empty range means "no bounds", which the trend API resolves to the full
+  // recorded history — the initial view on first load.
+  const [trendRange, setTrendRange] = useState<DateRange>({});
+  const { data: trendPoints = [], isLoading: isTrendLoading } = useMonthlyTrend(trendRange);
+
+  // Until the user picks a month explicitly, follow the last month in the
+  // trend range so the detail section is never stuck on an empty month.
+  const [pickedMonth, setPickedMonth] = useState<string | null>(null);
+  const selectedMonth =
+    pickedMonth ?? trendPoints[trendPoints.length - 1]?.month ?? format(new Date(), 'yyyy-MM');
   const [year, monthNum] = selectedMonth.split('-').map(Number);
 
-  // Always include data up to the later of the selected month or today so the
-  // trend chart never loses future months when an earlier month is clicked.
-  const today = new Date();
-  const selectedDate = new Date(selectedMonth + '-01');
-  const effectiveEnd = selectedDate > today ? selectedDate : today;
-  const windowStart = format(startOfMonth(subMonths(effectiveEnd, TREND_WINDOW_MONTHS - 1)), 'yyyy-MM-dd');
-  const windowEnd = format(endOfMonth(effectiveEnd), 'yyyy-MM-dd');
+  const monthStart = format(startOfMonth(new Date(selectedMonth + '-01')), 'yyyy-MM-dd');
+  const monthEnd = format(endOfMonth(new Date(selectedMonth + '-01')), 'yyyy-MM-dd');
 
-  const { data: page, isLoading } = useTransactions({ startDate: windowStart, endDate: windowEnd, size: 2000 });
-  const transactions = useMemo(() => page?.content ?? [], [page]);
+  // Only the selected month is fetched as raw rows; the trend line is
+  // aggregated server-side, so no unbounded transaction fetch is needed.
+  const { data: page, isLoading: isMonthLoading } = useTransactions({ startDate: monthStart, endDate: monthEnd, size: 500 });
+  const monthTx = useMemo(() => page?.content ?? [], [page]);
   const { data: summary } = useMonthlySummary(year, monthNum);
-
-  const monthTx = useMemo(
-    () => transactions.filter((tx) => tx.transactionDate.startsWith(selectedMonth)),
-    [transactions, selectedMonth],
-  );
 
   const income = summary?.totalIncome ?? 0;
   const expense = summary?.totalExpense ?? 0;
@@ -179,7 +176,7 @@ export default function DashboardPage() {
   const topIncome = monthTx.filter((tx) => tx.transactionType === 'INCOME').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
   const topExpense = monthTx.filter((tx) => tx.transactionType === 'EXPENSE').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
 
-  if (isLoading && transactions.length === 0) {
+  if (isTrendLoading && isMonthLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -191,60 +188,83 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8" data-testid="dashboard-page">
-      {/* 제목 */}
+    <div className="mx-auto max-w-6xl space-y-10" data-testid="dashboard-page">
       <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t('dashboard')}</h2>
 
-      {/* 1. 월별 추이 - 전체 폭 */}
-      <MonthlyTrendChart transactions={transactions} title={t('monthlyTrend')} incomeLabel={t('income')} expenseLabel={t('expense')} theme={theme} onMonthClick={setSelectedMonth} />
-
-      {/* 2. 월 선택 - 강조된 서브헤더 */}
-      <div className="relative z-30 flex items-center justify-center gap-2 rounded-xl2 border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <button onClick={() => setSelectedMonth(format(subMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
-          className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <MonthPickerPopover selectedMonth={selectedMonth} onSelect={setSelectedMonth} language={language} />
-        <button onClick={() => setSelectedMonth(format(addMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
-          className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
-      </div>
-
-      {/* 3. 요약 카드 */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <MonthlySummaryCard title={t('totalIncome')} amount={income} type="income" />
-        <MonthlySummaryCard title={t('totalExpense')} amount={expense} type="expense" />
-        <MonthlySummaryCard title={t('balance')} amount={balance} type="balance" />
-      </div>
-
-      {/* 4. 달력 */}
-      <section>
-        <TransactionCalendar transactions={monthTx} yearMonth={selectedMonth} t={t} />
+      {/* 섹션 1: 월별 추이 — 기간 관점 */}
+      <section aria-labelledby="trend-heading" data-testid="trend-section">
+        <SectionHeading
+          id="trend-heading"
+          title={t('monthlyTrend')}
+          description={t('monthlyTrendDesc')}
+          right={<TrendRangeSelector value={trendRange} onChange={setTrendRange} t={t} />}
+        />
+        <MonthlyTrendChart
+          points={trendPoints}
+          t={t}
+          language={language}
+          theme={theme}
+          selectedMonth={selectedMonth}
+          onMonthClick={setPickedMonth}
+        />
       </section>
 
-      {/* 5. Top 수입/지출 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">{t('topIncome')}</h3>
-          <TopTable items={topIncome} type="income" noDataLabel={t('noIncomeThisMonth')} t={t} />
-        </Card>
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{t('topExpense')}</h3>
-            <button onClick={() => navigate('/transactions')} className="text-sm font-medium text-brand-600 transition-colors duration-150 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
-              {t('viewAll')} →
-            </button>
-          </div>
-          <TopTable items={topExpense} type="expense" noDataLabel={t('noExpensesThisMonth')} t={t} />
-        </Card>
-      </div>
+      {/* 섹션 2: 월별 상세 — 선택한 한 달 관점 */}
+      <section aria-labelledby="detail-heading" className="space-y-6" data-testid="detail-section">
+        <SectionHeading
+          id="detail-heading"
+          title={t('monthlyDetail')}
+          description={t('monthlyDetailDesc')}
+          right={
+            <div className="relative z-30 flex items-center gap-1">
+              <button onClick={() => setPickedMonth(format(subMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
+                aria-label={t('startDate')}
+                className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <MonthPickerPopover selectedMonth={selectedMonth} onSelect={setPickedMonth} language={language} />
+              <button onClick={() => setPickedMonth(format(addMonths(new Date(selectedMonth + '-01'), 1), 'yyyy-MM'))}
+                aria-label={t('endDate')}
+                className="rounded-lg p-2 text-gray-500 transition-all duration-150 ease-smooth hover:bg-gray-100 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          }
+        />
 
-      {/* 6. 카테고리 / 태그 분석 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CategoryPieChart year={year} month={monthNum} title={t('categoryBreakdown')} noDataLabel={t('noExpensesThisMonth')} theme={theme} incomeLabel={t('income')} expenseLabel={t('expense')} />
-        <TagPieChart year={year} month={monthNum} title={t('expenseByTag')} noDataLabel={t('noExpensesThisMonth')} theme={theme} incomeLabel={t('income')} expenseLabel={t('expense')} />
-      </div>
+        {/* 요약 카드 */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <MonthlySummaryCard title={t('totalIncome')} amount={income} type="income" />
+          <MonthlySummaryCard title={t('totalExpense')} amount={expense} type="expense" />
+          <MonthlySummaryCard title={t('balance')} amount={balance} type="balance" />
+        </div>
+
+        {/* 달력 */}
+        <TransactionCalendar transactions={monthTx} yearMonth={selectedMonth} t={t} />
+
+        {/* Top 수입/지출 */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card>
+            <h4 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">{t('topIncome')}</h4>
+            <TopTable items={topIncome} type="income" noDataLabel={t('noIncomeThisMonth')} t={t} />
+          </Card>
+          <Card>
+            <div className="mb-4 flex items-center justify-between">
+              <h4 className="text-base font-semibold text-gray-900 dark:text-white">{t('topExpense')}</h4>
+              <button onClick={() => navigate('/transactions')} className="text-sm font-medium text-brand-600 transition-colors duration-150 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
+                {t('viewAll')} →
+              </button>
+            </div>
+            <TopTable items={topExpense} type="expense" noDataLabel={t('noExpensesThisMonth')} t={t} />
+          </Card>
+        </div>
+
+        {/* 카테고리 / 태그 분석 */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <CategoryPieChart year={year} month={monthNum} title={t('categoryBreakdown')} noDataLabel={t('noExpensesThisMonth')} theme={theme} incomeLabel={t('income')} expenseLabel={t('expense')} />
+          <TagPieChart year={year} month={monthNum} title={t('expenseByTag')} noDataLabel={t('noExpensesThisMonth')} theme={theme} incomeLabel={t('income')} expenseLabel={t('expense')} />
+        </div>
+      </section>
     </div>
   );
 }
