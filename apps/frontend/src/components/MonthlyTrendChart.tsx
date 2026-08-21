@@ -12,7 +12,6 @@ import {
   Filler,
   type Chart,
   type Plugin,
-  type Scale,
   type ChartEvent,
   type ActiveElement,
 } from 'chart.js';
@@ -27,6 +26,12 @@ import {
   formatPercent,
   formatSignedCompactKrw,
 } from '../lib/format';
+import {
+  createMonthBandPlugin,
+  createNegativeZonePlugin,
+  createNetBadgePlugin,
+  type TrendOverlayState,
+} from '../lib/trendChartPlugins';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
@@ -56,17 +61,6 @@ const PLOT_PADDING_RIGHT = 12;
 /** Room above the tallest bar for the net badge. */
 const BADGE_HEADROOM = 30;
 
-function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  const radius = Math.min(r, h / 2, w / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
-}
-
 /**
  * Diagonal hatch over the base colour so income and expense stay separable
  * without relying on hue alone.
@@ -95,11 +89,6 @@ function hatchPattern(ctx: CanvasRenderingContext2D, rgb: string, alpha: number)
     hatchCache.set(key, ctx.createPattern(tile, 'repeat'));
   }
   return hatchCache.get(key) ?? `rgba(${rgb}, ${alpha})`;
-}
-
-function categoryBandWidth(scale: Scale, count: number): number {
-  if (count > 1) return Math.abs(scale.getPixelForValue(1) - scale.getPixelForValue(0));
-  return scale.width;
 }
 
 export function MonthlyTrendChart({
@@ -145,6 +134,33 @@ export function MonthlyTrendChart({
     };
   }, [points]);
 
+  /**
+   * The overlay plugins are created once (see below) because react-chartjs-2
+   * never refreshes `config.plugins`. They read this ref, which is refreshed on
+   * every render, so switching the range repaints badges and bands from the
+   * current data instead of the data present when the chart was mounted.
+   */
+  const overlayState = useRef<TrendOverlayState>({
+    points,
+    labels,
+    selectedMonth,
+    inProgressIndex,
+    theme,
+    mutedColor,
+    noRecordsLabel: t('noRecords'),
+    inProgressLabel: t('inProgressMonth'),
+  });
+  overlayState.current = {
+    points,
+    labels,
+    selectedMonth,
+    inProgressIndex,
+    theme,
+    mutedColor,
+    noRecordsLabel: t('noRecords'),
+    inProgressLabel: t('inProgressMonth'),
+  };
+
   const selectMonthAt = useCallback(
     (index: number | undefined) => {
       if (index === undefined || !onMonthClick) return;
@@ -162,104 +178,16 @@ export function MonthlyTrendChart({
   );
 
   /** Highlight band for the selected month plus a marker for the in-progress one. */
-  const bandPlugin: Plugin = useMemo(
-    () => ({
-      id: 'monthBands',
-      beforeDatasetsDraw(chart) {
-        const { ctx, chartArea, scales } = chart;
-        const x = scales.x;
-        if (!x || labels.length === 0) return;
-        const bandWidth = categoryBandWidth(x, labels.length);
-
-        const drawBand = (index: number, fill: string) => {
-          const center = x.getPixelForValue(index);
-          ctx.save();
-          ctx.fillStyle = fill;
-          ctx.fillRect(center - bandWidth / 2, chartArea.top, bandWidth, chartArea.bottom - chartArea.top);
-          ctx.restore();
-        };
-
-        if (inProgressIndex >= 0) {
-          drawBand(inProgressIndex, theme === 'dark' ? 'rgba(148, 163, 184, 0.08)' : 'rgba(100, 116, 139, 0.06)');
-        }
-        const selectedIndex = selectedMonth ? labels.indexOf(selectedMonth) : -1;
-        if (selectedIndex >= 0) {
-          drawBand(selectedIndex, theme === 'dark' ? 'rgba(40, 81, 224, 0.18)' : 'rgba(40, 81, 224, 0.08)');
-        }
-      },
-    }),
-    [inProgressIndex, labels, selectedMonth, theme],
-  );
-
-  /** Net amount rendered as a badge above each month's bars (alternative B). */
-  const netBadgePlugin: Plugin = useMemo(
-    () => ({
-      id: 'netBadges',
-      afterDatasetsDraw(chart) {
-        const { ctx, chartArea, scales } = chart;
-        const y = scales.y;
-        const x = scales.x;
-        if (!y || !x) return;
-
-        ctx.save();
-        ctx.font = '600 11px system-ui, -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        points.forEach((point, index) => {
-          const center = x.getPixelForValue(index);
-          const tallest = Math.max(point.totalIncome, point.totalExpense);
-          const barTop = y.getPixelForValue(tallest);
-
-          if (!point.hasTransactions) {
-            ctx.fillStyle = mutedColor;
-            ctx.fillText(t('noRecords'), center, Math.max(chartArea.top + 10, barTop - 12));
-            return;
-          }
-
-          const text = formatSignedCompactKrw(point.netAmount);
-          const isPositive = point.netAmount >= 0;
-          const rgb = isPositive ? SERIES.income.rgb : SERIES.expense.rgb;
-          const width = ctx.measureText(text).width + 14;
-          const height = 18;
-          const centerY = Math.max(chartArea.top + height / 2, barTop - 14);
-
-          roundedRect(ctx, center - width / 2, centerY - height / 2, width, height, 9);
-          ctx.fillStyle = `rgba(${rgb}, ${theme === 'dark' ? 0.22 : 0.12})`;
-          ctx.fill();
-          ctx.fillStyle = isPositive ? SERIES.income.hex : SERIES.expense.hex;
-          ctx.fillText(text, center, centerY);
-        });
-
-        if (inProgressIndex >= 0) {
-          ctx.font = '500 10px system-ui, -apple-system, sans-serif';
-          ctx.fillStyle = mutedColor;
-          ctx.fillText(t('inProgressMonth'), x.getPixelForValue(inProgressIndex), chartArea.top - 12);
-        }
-        ctx.restore();
-      },
-    }),
-    [inProgressIndex, mutedColor, points, t, theme],
-  );
-
-  /** Shade the area below zero so a negative savings balance reads instantly. */
-  const negativeZonePlugin: Plugin = useMemo(
-    () => ({
-      id: 'negativeZone',
-      beforeDatasetsDraw(chart) {
-        const { ctx, chartArea, scales } = chart;
-        const y = scales.y;
-        if (!y || y.min >= 0) return;
-        const zero = y.getPixelForValue(0);
-        if (zero >= chartArea.bottom) return;
-        ctx.save();
-        ctx.fillStyle = theme === 'dark' ? 'rgba(220, 38, 38, 0.12)' : 'rgba(220, 38, 38, 0.06)';
-        ctx.fillRect(chartArea.left, zero, chartArea.right - chartArea.left, chartArea.bottom - zero);
-        ctx.restore();
-      },
-    }),
-    [theme],
-  );
+  const plugins = useRef<Plugin[]>();
+  if (!plugins.current) {
+    const getState = () => overlayState.current;
+    plugins.current = [
+      createMonthBandPlugin(getState),
+      createNetBadgePlugin(getState),
+      createNegativeZonePlugin(getState),
+    ];
+  }
+  const [bandPlugin, netBadgePlugin, negativeZonePlugin] = plugins.current;
 
   const barData = {
     labels,
