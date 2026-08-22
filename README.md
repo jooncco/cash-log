@@ -1,6 +1,6 @@
 # 💰 Cash Log
 
-간단한 개인 재무 관리 **웹 애플리케이션**. React + Spring Boot + MySQL 기반, Docker Compose로 배포.
+간단한 개인 재무 관리 **웹 애플리케이션**. React + Spring Boot + 임베디드 H2 기반, Docker Compose로 배포.
 
 ## 📸 미리보기
 
@@ -23,7 +23,8 @@
 - **Top 거래**: 상위 5건 수입/지출 테이블
 
 ### 💾 데이터 관리
-- MySQL 영속 저장 (Docker 볼륨)
+- 임베디드 H2 파일 모드로 영속 저장 (Docker 볼륨 `cashlog-data`)
+- 별도 DB 컨테이너·자격증명 불필요
 - CSV, Excel, PDF 내보내기
 
 ### 🌐 다국어 & 다크 모드
@@ -59,7 +60,7 @@
 ### 인프라
 | 기술 | 버전 |
 |------|------|
-| MySQL | 8.0 |
+| H2 (임베디드) | 2.2 |
 | Docker Compose | - |
 | Nginx | Alpine |
 
@@ -82,7 +83,7 @@ cash-log/
 │       ├── nginx.conf
 │       └── Dockerfile
 ├── infrastructure/
-│   └── docker/              # 개발용 MySQL Docker Compose
+│   └── scripts/             # 운영 스크립트 (MySQL→H2 데이터 이관 등)
 ├── docker-compose.yml       # 전체 스택 배포
 └── .env.example
 ```
@@ -111,24 +112,18 @@ docker compose up --build -d
 
 ### 개발 모드
 
-개발 시에는 프론트엔드와 백엔드를 별도로 실행합니다.
+개발 시에는 프론트엔드와 백엔드를 별도로 실행합니다. 별도 DB 컨테이너는 필요하지 않습니다.
 
-1. **MySQL 실행**
-```bash
-cd infrastructure/docker
-cp .env.example .env  # 비밀번호 설정
-docker compose up -d
-```
-
-2. **백엔드 실행**
+1. **백엔드 실행**
 ```bash
 cd apps/backend
-export DB_USER=cashlog
-export DB_PASSWORD=<your-password>
-./mvnw spring-boot:run
+./mvnw spring-boot:run                                   # apps/backend/data/ 에 H2 파일 생성
+# 또는 매번 초기화되는 인메모리 DB로 실행
+SPRING_PROFILES_ACTIVE=demo ./mvnw spring-boot:run
 ```
+`dev` 프로필로 실행하면 H2 콘솔을 http://localhost:8080/h2-console 에서 사용할 수 있습니다.
 
-3. **프론트엔드 실행**
+2. **프론트엔드 실행**
 ```bash
 cd apps/frontend
 npm install
@@ -170,18 +165,30 @@ npm test
 ## 🏗️ 배포 아키텍처
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────┐
-│   Nginx     │────▶│  Spring Boot │────▶│  MySQL  │
-│  (port 80)  │     │  (port 8080) │     │ (3306)  │
-│  + React    │     │  REST API    │     │         │
-│  SPA        │     │              │     │         │
-└─────────────┘     └──────────────┘     └─────────┘
-   frontend            backend             mysql
+┌─────────────┐     ┌──────────────────────────┐
+│   Nginx     │────▶│  Spring Boot             │
+│  (port 80)  │     │  (port 8080)             │
+│  + React    │     │  REST API + 임베디드 H2  │
+│  SPA        │     │  (파일 모드, /data)      │
+└─────────────┘     └──────────────────────────┘
+   frontend                    backend
 ```
 
 - Nginx가 정적 파일(React SPA)을 서빙하고, `/api/` 요청을 백엔드로 프록시
 - 백엔드는 Docker 네트워크 내부에서만 접근 가능 (호스트에 포트 노출 안 함)
-- MySQL 데이터는 Docker 볼륨(`docker_mysql-data`)에 영속 저장
+- H2 데이터베이스 파일은 Docker 볼륨(`cashlog-data`)에 영속 저장되며, DB 컨테이너와 자격증명이 필요하지 않음
+- `SPRING_PROFILES_ACTIVE=demo`로 실행하면 인메모리 H2를 사용해 재기동마다 초기화됨 (데모용)
+
+### 백업
+
+H2 데이터는 볼륨 하나에 모여 있어 파일 복사로 백업할 수 있습니다.
+
+```bash
+docker compose stop backend   # 파일 모드는 배타 락을 사용하므로 먼저 정지
+docker run --rm -v cashlog-data:/data -v "$PWD":/out alpine \
+  tar czf /out/cashlog-h2-$(date +%Y%m%d).tar.gz -C /data .
+docker compose start backend
+```
 
 ## 📝 라이선스
 

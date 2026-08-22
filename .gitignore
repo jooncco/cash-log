@@ -37,3 +37,6 @@ logs/
 tmp/
 temp/
 *.tsbuildinfo
+
+# Local DB dumps and migration artifacts (contain personal financial data)
+backup/

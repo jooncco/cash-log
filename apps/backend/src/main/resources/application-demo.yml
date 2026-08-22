@@ -1,0 +1,20 @@
+# Throwaway in-memory database: the schema is rebuilt and the default
+# categories are re-seeded on every start, and nothing survives a restart.
+# Intended for demos and local experiments, not for real bookkeeping.
+spring:
+  datasource:
+    url: jdbc:h2:mem:cashlog;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    clean-disabled: false
+
+logging:
+  level:
+    com.cashlog: DEBUG

@@ -6,7 +6,6 @@ Spring Boot backend API for Cash Log personal finance application.
 
 - Java 21
 - Maven 3.8+
-- MySQL 8.0
 - Docker (optional)
 
 ### IDE Setup for Lombok
@@ -25,15 +24,21 @@ Spring Boot backend API for Cash Log personal finance application.
 1. Install "Language Support for Java" extension
 2. Lombok support is included automatically
 
-## Database Setup
+## Database
 
-1. Start MySQL using Docker Compose:
-```bash
-cd ../../infrastructure/scripts
-./start.sh
-```
+The backend uses an **embedded H2 database** — no separate database server is
+required.
 
-2. Database will be created automatically with Flyway migrations.
+| Profile | Datasource | Lifetime |
+|---------|-----------|----------|
+| (default) | `jdbc:h2:file:${CASHLOG_DB_PATH:./data/cashlog}` | Persists across restarts |
+| `demo` | `jdbc:h2:mem:cashlog` | Reset on every start |
+| `test` | `jdbc:h2:mem:testdb` | Per test run |
+
+Flyway owns the schema (`src/main/resources/db/migration`) and Hibernate runs
+with `ddl-auto: validate`, so a mismatch between entities and migrations fails
+at startup. The `dev` profile additionally exposes the H2 console at
+`/h2-console`.
 
 ## Build and Run
 
@@ -58,11 +63,14 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 # Build image
 docker build -t cashlog-backend .
 
-# Run container
+# Run container (H2 files kept on a volume)
 docker run -p 8080:8080 \
-  -e DB_USER=cashlog \
-  -e DB_PASSWORD=your_password \
+  -v cashlog-data:/data \
+  -e CASHLOG_DB_PATH=/data/cashlog \
   cashlog-backend
+
+# Run a throwaway in-memory instance
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=demo cashlog-backend
 ```
 
 ## API Documentation
@@ -76,8 +84,9 @@ API docs JSON:
 ## Configuration
 
 Environment variables:
-- `DB_USER`: Database username (default: cashlog)
-- `DB_PASSWORD`: Database password (required)
+- `CASHLOG_DB_PATH`: H2 database file prefix (default: `./data/cashlog`)
+- `SPRING_PROFILES_ACTIVE`: `dev`, `demo` or empty
+- `APP_CORS_ALLOWED_ORIGINS`: comma-separated origins allowed on `/api/**`
 
 ## Testing
 

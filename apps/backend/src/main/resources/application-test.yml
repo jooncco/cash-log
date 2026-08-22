@@ -1,18 +1,18 @@
+# Tests run against in-memory H2 using the same Flyway migrations as
+# production, so a migration that only works on MySQL fails the build.
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+      ddl-auto: validate
+    show-sql: false
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
 
 logging:
   level:

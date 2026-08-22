@@ -2,25 +2,28 @@ spring:
   application:
     name: cashlog-backend
   
+  # Embedded H2 in file mode: no separate database container, data survives
+  # restarts. Override CASHLOG_DB_PATH to relocate the database files, or run
+  # with SPRING_PROFILES_ACTIVE=demo for a throwaway in-memory database.
   datasource:
-    url: jdbc:mysql://localhost:3306/cashlog?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:h2:file:${CASHLOG_DB_PATH:./data/cashlog};DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=FALSE
     username: ${DB_USER:cashlog}
-    password: ${DB_PASSWORD:change_this_password}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
     hikari:
       maximum-pool-size: 10
-      minimum-idle: 5
+      minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
   
   jpa:
     hibernate:
-      ddl-auto: none
+      # Flyway owns the schema; validate fails fast if entities drift from it.
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
   
