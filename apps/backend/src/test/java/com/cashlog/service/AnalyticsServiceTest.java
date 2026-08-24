@@ -129,6 +129,27 @@ class AnalyticsServiceTest {
     }
 
     @Test
+    void getMonthlyTrend_reportsFixedCostsPerMonth_zeroWhereNoneRecorded() {
+        when(transactionRepository.aggregateMonthlyTotals(any(), any())).thenReturn(List.of(
+                new Object[]{2024, 1, TransactionType.EXPENSE, new BigDecimal("400000")},
+                new Object[]{2024, 3, TransactionType.EXPENSE, new BigDecimal("250000")}
+        ));
+        when(transactionRepository.aggregateMonthlyFixedCosts(any(), any(), eq(TransactionType.EXPENSE)))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{2024, 1, new BigDecimal("150000")},
+                        new Object[]{2024, 3, new BigDecimal("150000")}
+                ));
+        when(transactionRepository.aggregateTotalsBefore(any())).thenReturn(List.of());
+
+        var points = analyticsService.getMonthlyTrend(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31));
+
+        assertEquals(0, new BigDecimal("150000").compareTo(points.get(0).getFixedCost()));
+        // February has no transaction at all, so it charts a zero rather than a gap.
+        assertEquals(0, BigDecimal.ZERO.compareTo(points.get(1).getFixedCost()));
+        assertEquals(0, new BigDecimal("150000").compareTo(points.get(2).getFixedCost()));
+    }
+
+    @Test
     void getMonthlyTrend_seedsSavingsWithBalanceBeforeRange() {
         when(transactionRepository.aggregateMonthlyTotals(any(), any())).thenReturn(List.<Object[]>of(
                 new Object[]{2024, 5, TransactionType.INCOME, new BigDecimal("10000")}

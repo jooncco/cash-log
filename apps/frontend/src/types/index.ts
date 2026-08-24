@@ -8,6 +8,8 @@ export interface Transaction {
   amountKrw: number;
   category: Category | null;
   memo?: string;
+  /** True for recurring fixed costs; the API keeps it false for income. */
+  fixedCost: boolean;
   tags: Tag[];
   createdAt: string;
   updatedAt: string;
@@ -21,6 +23,7 @@ export interface CreateTransactionRequest {
   conversionRate?: number;
   categoryId: number;
   memo?: string;
+  fixedCost?: boolean;
   tagNames: string[];
 }
 
@@ -70,6 +73,8 @@ export interface MonthlyTrendPoint {
   totalIncome: number;
   totalExpense: number;
   netAmount: number;
+  /** Fixed-cost slice of `totalExpense` for this month, not an extra outflow. */
+  fixedCost: number;
   /** Running balance since the first ever transaction, not just this range. */
   cumulativeSavings: number;
   /** False when the month holds no transaction at all (vs. netting to zero). */

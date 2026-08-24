@@ -12,6 +12,7 @@ function point(month: string, income: number, expense: number, hasTransactions =
     totalIncome: income,
     totalExpense: expense,
     netAmount: income - expense,
+    fixedCost: 0,
     cumulativeSavings: income - expense,
     hasTransactions,
   };

@@ -53,6 +53,7 @@ const SERIES = {
   income: { hex: '#16a34a', rgb: '22, 163, 74' },
   expense: { hex: '#dc2626', rgb: '220, 38, 38' },
   savings: { hex: '#7c3aed', rgb: '124, 58, 237' },
+  fixed: { hex: '#d97706', rgb: '217, 119, 6' },
 } as const;
 
 /** Pinning both y axes to the same width keeps the two canvases aligned. */
@@ -234,6 +235,21 @@ export function MonthlyTrendChart({
         pointHoverBorderColor: theme === 'dark' ? '#111827' : '#ffffff',
         pointHoverBorderWidth: 2,
       },
+      {
+        label: t('fixedCost'),
+        data: points.map((p) => p.fixedCost),
+        borderColor: SERIES.fixed.hex,
+        // Dashed so the two lines stay apart without relying on hue alone.
+        borderDash: [5, 3],
+        borderWidth: 2,
+        tension: 0,
+        fill: false,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: SERIES.fixed.hex,
+        pointHoverBorderColor: theme === 'dark' ? '#111827' : '#ffffff',
+        pointHoverBorderWidth: 2,
+      },
     ],
   };
 
@@ -295,6 +311,15 @@ export function MonthlyTrendChart({
         <span className="inline-flex items-center gap-1.5">
           <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: SERIES.savings.hex }} />
           {t('cumulativeSavings')}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-0.5 w-4"
+            style={{
+              backgroundImage: `repeating-linear-gradient(90deg, ${SERIES.fixed.hex} 0 5px, transparent 5px 8px)`,
+            }}
+          />
+          {t('fixedCost')}
         </span>
       </div>
 
@@ -387,7 +412,7 @@ export function MonthlyTrendChart({
       </div>
 
       {/* 누적 저축액: 흐름이 아닌 잔액이므로 x축만 공유하는 별도 스트립 */}
-      <div className="mt-1 h-[92px]">
+      <div className="mt-1 h-[120px]">
         <Line
           data={stripData}
           plugins={[bandPlugin, negativeZonePlugin]}
@@ -407,7 +432,7 @@ export function MonthlyTrendChart({
                 ...tooltipStyle,
                 callbacks: {
                   title: (items) => (items.length ? formatMonthLong(items[0].label, language) : ''),
-                  label: (context) => ` ${t('cumulativeSavings')}: ${formatFullKrw(context.parsed.y ?? 0)}`,
+                  label: (context) => ` ${context.dataset.label}: ${formatFullKrw(context.parsed.y ?? 0)}`,
                   footer: (items) => {
                     const index = items[0]?.dataIndex ?? 0;
                     const previous = points[index - 1];
@@ -430,8 +455,10 @@ export function MonthlyTrendChart({
                 afterFit: (scale) => {
                   scale.width = Y_AXIS_WIDTH;
                 },
+                // Shared by both strip series, so the ticks stay neutral rather
+                // than taking either line's colour.
                 ticks: {
-                  color: SERIES.savings.hex,
+                  color: axisColor,
                   font: { size: 10 },
                   maxTicksLimit: 3,
                   callback: (value) => formatCompactKrw(Number(value)),
@@ -455,6 +482,7 @@ export function MonthlyTrendChart({
             <th scope="col">{t('income')}</th>
             <th scope="col">{t('expense')}</th>
             <th scope="col">{t('netIncome')}</th>
+            <th scope="col">{t('fixedCost')}</th>
             <th scope="col">{t('cumulativeSavings')}</th>
           </tr>
         </thead>
@@ -465,6 +493,7 @@ export function MonthlyTrendChart({
               <td>{formatFullKrw(point.totalIncome)}</td>
               <td>{formatFullKrw(point.totalExpense)}</td>
               <td>{formatFullKrw(point.netAmount)}</td>
+              <td>{formatFullKrw(point.fixedCost)}</td>
               <td>{formatFullKrw(point.cumulativeSavings)}</td>
             </tr>
           ))}

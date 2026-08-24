@@ -20,6 +20,7 @@ interface FormData {
   conversionRate?: number;
   categoryId: number;
   memo: string;
+  fixedCost: boolean;
 }
 
 const selectClassName =
@@ -38,9 +39,15 @@ export function TransactionFormModal() {
   const [tagInput, setTagInput] = useState('');
   const [isComposing, setIsComposing] = useState(false);
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>();
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>();
   const originalCurrency = watch('originalCurrency');
   const isForeignCurrency = Boolean(originalCurrency) && originalCurrency !== 'KRW';
+  // "고정비" describes money going out, so the flag is only offered on expenses.
+  const isExpense = watch('transactionType') !== 'INCOME';
+
+  useEffect(() => {
+    if (!isExpense) setValue('fixedCost', false);
+  }, [isExpense, setValue]);
 
   useEffect(() => {
     if (transactionModalOpen) {
@@ -53,10 +60,11 @@ export function TransactionFormModal() {
           conversionRate: editingTransaction.conversionRate,
           categoryId: editingTransaction.category?.id,
           memo: editingTransaction.memo ?? '',
+          fixedCost: editingTransaction.fixedCost ?? false,
         });
         setSelectedTags(editingTransaction.tags.map((tag) => tag.name));
       } else {
-        reset({ transactionDate: '', transactionType: 'EXPENSE', originalAmount: 0, originalCurrency: 'KRW', conversionRate: undefined, categoryId: 0, memo: '' });
+        reset({ transactionDate: '', transactionType: 'EXPENSE', originalAmount: 0, originalCurrency: 'KRW', conversionRate: undefined, categoryId: 0, memo: '', fixedCost: false });
         setSelectedTags([]);
       }
     }
@@ -68,6 +76,7 @@ export function TransactionFormModal() {
       originalAmount: Number(data.originalAmount),
       categoryId: Number(data.categoryId),
       conversionRate: data.originalCurrency === 'KRW' ? undefined : Number(data.conversionRate),
+      fixedCost: data.transactionType === 'EXPENSE' && Boolean(data.fixedCost),
       tagNames: selectedTags,
     };
     try {
@@ -187,9 +196,28 @@ export function TransactionFormModal() {
 
         <Input label={t('memoOptional')} {...register('memo')} data-testid="tx-memo" />
 
-        <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 mt-1 dark:border-gray-700">
-          <Button variant="secondary" type="button" onClick={closeTransactionModal}>{t('cancel')}</Button>
-          <Button type="submit" data-testid="tx-submit">{editingTransaction ? t('update') : t('save')}</Button>
+        <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-4 mt-1 dark:border-gray-700">
+          <label
+            className={`inline-flex items-center gap-2 text-sm font-medium ${
+              isExpense
+                ? 'cursor-pointer text-gray-700 dark:text-gray-300'
+                : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
+            }`}
+            title={isExpense ? undefined : t('fixedCostExpenseOnly')}
+          >
+            <input
+              type="checkbox"
+              disabled={!isExpense}
+              className="h-4 w-4 rounded border-gray-300 accent-brand-600 outline-none transition-all duration-150 ease-smooth focus:ring-2 focus:ring-brand-500/30 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800"
+              data-testid="tx-fixed-cost"
+              {...register('fixedCost')}
+            />
+            {t('fixedCost')}
+          </label>
+          <div className="flex gap-2">
+            <Button variant="secondary" type="button" onClick={closeTransactionModal}>{t('cancel')}</Button>
+            <Button type="submit" data-testid="tx-submit">{editingTransaction ? t('update') : t('save')}</Button>
+          </div>
         </div>
       </form>
     </Modal>

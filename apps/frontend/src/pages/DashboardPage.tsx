@@ -176,6 +176,13 @@ export default function DashboardPage() {
   const topIncome = monthTx.filter((tx) => tx.transactionType === 'INCOME').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
   const topExpense = monthTx.filter((tx) => tx.transactionType === 'EXPENSE').sort((a, b) => b.amountKrw - a.amountKrw).slice(0, 5);
 
+  // Fixed costs are few per month, so the card lists all of them rather than a
+  // top-N slice — the point is to see the whole recurring load at a glance.
+  const fixedCosts = monthTx
+    .filter((tx) => tx.fixedCost && tx.transactionType === 'EXPENSE')
+    .sort((a, b) => b.amountKrw - a.amountKrw);
+  const fixedCostTotal = fixedCosts.reduce((sum, tx) => sum + tx.amountKrw, 0);
+
   if (isTrendLoading && isMonthLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -258,6 +265,26 @@ export default function DashboardPage() {
             <TopTable items={topExpense} type="expense" noDataLabel={t('noExpensesThisMonth')} t={t} />
           </Card>
         </div>
+
+        {/* 고정비 — 매달 반복되는 지출만 따로 */}
+        <Card>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <h4 className="text-base font-semibold text-gray-900 dark:text-white">{t('fixedCost')}</h4>
+            {fixedCosts.length > 0 && (
+              <div className="text-right">
+                <p className="text-lg font-bold tabular-nums text-amber-600 dark:text-amber-400">
+                  {fixedCostTotal.toLocaleString()}원
+                </p>
+                {expense > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('fixedCostRatio')} {((fixedCostTotal / expense) * 100).toFixed(1)}%
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <TopTable items={fixedCosts} type="expense" noDataLabel={t('noFixedCostThisMonth')} t={t} />
+        </Card>
 
         {/* 카테고리 / 태그 분석 */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

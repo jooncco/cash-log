@@ -15,7 +15,7 @@ const mockTx: Transaction = {
   id: 1, transactionDate: '2024-01-15', transactionType: 'EXPENSE',
   originalAmount: 10000, originalCurrency: 'KRW', amountKrw: 10000,
   category: { id: 1, name: 'Food', color: '#ff0000', createdAt: '', updatedAt: '' },
-  memo: 'lunch', tags: [], createdAt: '', updatedAt: '',
+  memo: 'lunch', fixedCost: false, tags: [], createdAt: '', updatedAt: '',
 };
 
 function mockPage(content: Transaction[]): PageResponse<Transaction> {

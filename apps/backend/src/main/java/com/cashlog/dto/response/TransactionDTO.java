@@ -23,6 +23,8 @@ public class TransactionDTO {
     private BigDecimal amountKrw;
     private CategoryDTO category;
     private String memo;
+    /** True for recurring fixed costs; always false for income. */
+    private Boolean fixedCost;
     private Set<TagDTO> tags;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

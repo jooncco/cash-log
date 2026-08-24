@@ -20,6 +20,11 @@ public class MonthlyTrendPointDTO {
     private BigDecimal totalExpense;
     private BigDecimal netAmount;
     /**
+     * Sum of this month's expenses flagged as fixed costs. It is a slice of
+     * {@code totalExpense}, not an extra outflow on top of it.
+     */
+    private BigDecimal fixedCost;
+    /**
      * Running balance of (income - expense) from the first ever recorded
      * transaction up to and including this month. It is intentionally not
      * limited to the queried range, so narrowing the range shifts the visible

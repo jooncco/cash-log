@@ -46,6 +46,15 @@ public class Transaction {
     
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
+
+    /**
+     * Marks an outgoing that recurs every month on its own (insurance, loan
+     * repayment, interest, telecom). Only expenses can carry the flag, so the
+     * dashboard's fixed-cost line and list never mix income in.
+     */
+    @Column(name = "fixed_cost", nullable = false)
+    @Builder.Default
+    private Boolean fixedCost = false;
     
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(

@@ -35,6 +35,7 @@ public class TransactionMapper {
                 .amountKrw(transaction.getAmountKrw())
                 .category(categoryDTO)
                 .memo(transaction.getMemo())
+                .fixedCost(Boolean.TRUE.equals(transaction.getFixedCost()))
                 .tags(transaction.getTags().stream()
                         .map(tag -> TagDTO.builder()
                                 .id(tag.getId())

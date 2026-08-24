@@ -80,6 +80,13 @@ public class AnalyticsService {
             bucket[slot] = bucket[slot].add(sum);
         }
 
+        Map<YearMonth, BigDecimal> fixedCosts = new LinkedHashMap<>();
+        for (Object[] row : transactionRepository.aggregateMonthlyFixedCosts(
+                resolvedStart, resolvedEnd, TransactionType.EXPENSE)) {
+            YearMonth key = YearMonth.of(((Number) row[0]).intValue(), ((Number) row[1]).intValue());
+            fixedCosts.put(key, row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO);
+        }
+
         // Savings accumulate from the very first record, not from the queried
         // range, so the level stays comparable when the range changes.
         BigDecimal running = netAmountBefore(resolvedStart);
@@ -98,6 +105,7 @@ public class AnalyticsService {
                     .totalIncome(bucket[0])
                     .totalExpense(bucket[1])
                     .netAmount(net)
+                    .fixedCost(fixedCosts.getOrDefault(cursor, BigDecimal.ZERO))
                     .cumulativeSavings(running)
                     .hasTransactions(hasTransactions)
                     .build());

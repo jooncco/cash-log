@@ -37,6 +37,12 @@ public class CreateTransactionRequest {
     private Long categoryId;
     
     private String memo;
-    
+
+    /**
+     * Whether this is a recurring fixed cost. Ignored for income, which the
+     * service coerces back to {@code false}.
+     */
+    private Boolean fixedCost;
+
     private Set<String> tagNames;
 }

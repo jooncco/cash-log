@@ -55,6 +55,7 @@ public class TransactionService {
                 .amountKrw(amountKrw)
                 .category(category)
                 .memo(request.getMemo())
+                .fixedCost(resolveFixedCost(request))
                 .tags(tags)
                 .build();
         
@@ -116,6 +117,7 @@ public class TransactionService {
         transaction.setAmountKrw(amountKrw);
         transaction.setCategory(category);
         transaction.setMemo(request.getMemo());
+        transaction.setFixedCost(resolveFixedCost(request));
         transaction.setTags(tags);
         
         Transaction updated = transactionRepository.save(transaction);
@@ -130,6 +132,16 @@ public class TransactionService {
         transactionRepository.deleteById(id);
     }
     
+    /**
+     * "고정비" only makes sense for money going out, so the flag is forced back
+     * to false on income. That keeps the dashboard's fixed-cost total a pure
+     * expense figure no matter what the client sends.
+     */
+    private boolean resolveFixedCost(CreateTransactionRequest request) {
+        return request.getTransactionType() == TransactionType.EXPENSE
+                && Boolean.TRUE.equals(request.getFixedCost());
+    }
+
     private BigDecimal calculateAmountKrw(BigDecimal originalAmount, String currency, BigDecimal conversionRate) {
         if ("KRW".equals(currency)) {
             return originalAmount;

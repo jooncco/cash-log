@@ -59,6 +59,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     );
 
     /**
+     * Per-month fixed-cost totals, used by the trend chart's fixed-cost line.
+     * Returns rows of {@code [year, month, sumAmountKrw]}.
+     */
+    @Query("SELECT YEAR(t.transactionDate), MONTH(t.transactionDate), SUM(t.amountKrw) " +
+           "FROM Transaction t WHERE t.transactionDate BETWEEN :startDate AND :endDate " +
+           "AND t.fixedCost = TRUE AND t.transactionType = :type " +
+           "GROUP BY YEAR(t.transactionDate), MONTH(t.transactionDate) " +
+           "ORDER BY YEAR(t.transactionDate), MONTH(t.transactionDate)")
+    List<Object[]> aggregateMonthlyFixedCosts(
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        @Param("type") TransactionType type
+    );
+
+    /**
      * Income/expense totals for everything strictly before {@code date}, used
      * as the opening balance of the cumulative savings line. Returns rows of
      * {@code [transactionType, sumAmountKrw]}.

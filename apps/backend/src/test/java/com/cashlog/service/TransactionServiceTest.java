@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -70,6 +71,73 @@ class TransactionServiceTest {
 
         assertNotNull(result);
         verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    void createTransaction_persistsFixedCostFlag_onExpense() {
+        CreateTransactionRequest request = CreateTransactionRequest.builder()
+                .transactionDate(LocalDate.now())
+                .transactionType(TransactionType.EXPENSE)
+                .originalAmount(new BigDecimal("10000"))
+                .originalCurrency("KRW")
+                .categoryId(1L)
+                .fixedCost(true)
+                .build();
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(Category.builder().id(1L).name("보험료").color("#ff0000").build()));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(transactionMapper.toDTO(any(Transaction.class))).thenReturn(new TransactionDTO());
+
+        transactionService.createTransaction(request);
+
+        ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(saved.capture());
+        assertTrue(saved.getValue().getFixedCost());
+    }
+
+    @Test
+    void createTransaction_forcesFixedCostFalse_onIncome() {
+        CreateTransactionRequest request = CreateTransactionRequest.builder()
+                .transactionDate(LocalDate.now())
+                .transactionType(TransactionType.INCOME)
+                .originalAmount(new BigDecimal("10000"))
+                .originalCurrency("KRW")
+                .categoryId(1L)
+                // A client that sends the flag on income must not be able to
+                // pollute the fixed-cost totals with money coming in.
+                .fixedCost(true)
+                .build();
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(Category.builder().id(1L).name("급여").color("#00ff00").build()));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(transactionMapper.toDTO(any(Transaction.class))).thenReturn(new TransactionDTO());
+
+        transactionService.createTransaction(request);
+
+        ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(saved.capture());
+        assertFalse(saved.getValue().getFixedCost());
+    }
+
+    @Test
+    void createTransaction_defaultsFixedCostToFalse_whenOmitted() {
+        CreateTransactionRequest request = CreateTransactionRequest.builder()
+                .transactionDate(LocalDate.now())
+                .transactionType(TransactionType.EXPENSE)
+                .originalAmount(new BigDecimal("10000"))
+                .originalCurrency("KRW")
+                .categoryId(1L)
+                .build();
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(Category.builder().id(1L).name("Food").color("#ff0000").build()));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(transactionMapper.toDTO(any(Transaction.class))).thenReturn(new TransactionDTO());
+
+        transactionService.createTransaction(request);
+
+        ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(saved.capture());
+        assertFalse(saved.getValue().getFixedCost());
     }
 
     @Test
