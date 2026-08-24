@@ -178,9 +178,10 @@ export default function DashboardPage() {
 
   // Fixed costs are few per month, so the card lists all of them rather than a
   // top-N slice — the point is to see the whole recurring load at a glance.
+  // Ordered by date so the list reads like the month's payment schedule.
   const fixedCosts = monthTx
     .filter((tx) => tx.fixedCost && tx.transactionType === 'EXPENSE')
-    .sort((a, b) => b.amountKrw - a.amountKrw);
+    .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate) || b.amountKrw - a.amountKrw);
   const fixedCostTotal = fixedCosts.reduce((sum, tx) => sum + tx.amountKrw, 0);
 
   if (isTrendLoading && isMonthLoading) {

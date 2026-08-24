@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { format } from 'date-fns';
 import {
@@ -14,6 +14,7 @@ import {
   type Plugin,
   type ChartEvent,
   type ActiveElement,
+  type TooltipModel,
 } from 'chart.js';
 import { Card } from './ui/Card';
 import type { MonthlyTrendPoint } from '../types';
@@ -61,14 +62,23 @@ const Y_AXIS_WIDTH = 68;
 const PLOT_PADDING_RIGHT = 12;
 /** Room above the tallest bar for the net badge. */
 const BADGE_HEADROOM = 30;
+/** Half the savings-strip tooltip's width, used to keep it inside the card. */
+const STRIP_TOOLTIP_HALF_WIDTH = 92;
 
 /**
  * Diagonal hatch over the base colour so income and expense stay separable
- * without relying on hue alone.
+ * without relying on hue alone. The two series lean opposite ways, so the
+ * pattern still tells them apart now that both bars are hatched.
  */
+type HatchLean = 'up' | 'down';
 const hatchCache = new Map<string, CanvasPattern | null>();
-function hatchPattern(ctx: CanvasRenderingContext2D, rgb: string, alpha: number): CanvasPattern | string {
-  const key = `${rgb}-${alpha}`;
+function hatchPattern(
+  ctx: CanvasRenderingContext2D,
+  rgb: string,
+  alpha: number,
+  lean: HatchLean,
+): CanvasPattern | string {
+  const key = `${rgb}-${alpha}-${lean}`;
   if (!hatchCache.has(key)) {
     const tile = document.createElement('canvas');
     tile.width = 6;
@@ -80,12 +90,21 @@ function hatchPattern(ctx: CanvasRenderingContext2D, rgb: string, alpha: number)
     tileCtx.strokeStyle = `rgba(255, 255, 255, ${0.5 * alpha})`;
     tileCtx.lineWidth = 1.5;
     tileCtx.beginPath();
-    tileCtx.moveTo(0, 6);
-    tileCtx.lineTo(6, 0);
-    tileCtx.moveTo(-3, 3);
-    tileCtx.lineTo(3, -3);
-    tileCtx.moveTo(3, 9);
-    tileCtx.lineTo(9, 3);
+    if (lean === 'up') {
+      tileCtx.moveTo(0, 6);
+      tileCtx.lineTo(6, 0);
+      tileCtx.moveTo(-3, 3);
+      tileCtx.lineTo(3, -3);
+      tileCtx.moveTo(3, 9);
+      tileCtx.lineTo(9, 3);
+    } else {
+      tileCtx.moveTo(0, 0);
+      tileCtx.lineTo(6, 6);
+      tileCtx.moveTo(-3, 3);
+      tileCtx.lineTo(3, 9);
+      tileCtx.moveTo(3, -3);
+      tileCtx.lineTo(9, 3);
+    }
     tileCtx.stroke();
     hatchCache.set(key, ctx.createPattern(tile, 'repeat'));
   }
@@ -190,6 +209,37 @@ export function MonthlyTrendChart({
   }
   const [bandPlugin, netBadgePlugin, negativeZonePlugin] = plugins.current;
 
+  /**
+   * The savings strip is only 120px tall, so an in-canvas tooltip always lands
+   * on top of the lines it describes. It is rendered as HTML underneath the
+   * strip instead, where it can overflow the canvas without hiding anything.
+   */
+  const [stripTooltip, setStripTooltip] = useState<{ index: number; x: number } | null>(null);
+  const stripTooltipKey = useRef('');
+  const handleStripTooltip = useCallback(({ chart, tooltip }: { chart: Chart; tooltip: TooltipModel<'line'> }) => {
+    // `opacity`/`caretX` are animated and `dataPoints` keeps its last non-empty
+    // value, so none of them describe the current frame. The active elements
+    // and the x scale do.
+    const index = tooltip.getActiveElements()[0]?.index;
+    if (index === undefined) {
+      if (stripTooltipKey.current === '') return;
+      stripTooltipKey.current = '';
+      setStripTooltip(null);
+      return;
+    }
+    const x = Math.min(
+      Math.max(chart.scales.x.getPixelForValue(index), STRIP_TOOLTIP_HALF_WIDTH),
+      Math.max(chart.width - STRIP_TOOLTIP_HALF_WIDTH, STRIP_TOOLTIP_HALF_WIDTH),
+    );
+    // Chart.js calls this on every tooltip change; skip the no-op renders.
+    const key = `${index}:${Math.round(x)}`;
+    if (key === stripTooltipKey.current) return;
+    stripTooltipKey.current = key;
+    setStripTooltip({ index, x });
+  }, []);
+  const stripPoint = stripTooltip ? points[stripTooltip.index] : undefined;
+  const stripPrevious = stripTooltip ? points[stripTooltip.index - 1] : undefined;
+
   const barData = {
     labels,
     datasets: [
@@ -197,7 +247,7 @@ export function MonthlyTrendChart({
         label: t('income'),
         data: points.map((p) => p.totalIncome),
         backgroundColor: (context: { chart: Chart; dataIndex: number }) =>
-          `rgba(${SERIES.income.rgb}, ${context.dataIndex === inProgressIndex ? 0.45 : 0.9})`,
+          hatchPattern(context.chart.ctx, SERIES.income.rgb, context.dataIndex === inProgressIndex ? 0.45 : 0.9, 'down'),
         hoverBackgroundColor: SERIES.income.hex,
         borderRadius: 3,
         borderSkipped: false as const,
@@ -208,7 +258,7 @@ export function MonthlyTrendChart({
         label: t('expense'),
         data: points.map((p) => p.totalExpense),
         backgroundColor: (context: { chart: Chart; dataIndex: number }) =>
-          hatchPattern(context.chart.ctx, SERIES.expense.rgb, context.dataIndex === inProgressIndex ? 0.45 : 0.9),
+          hatchPattern(context.chart.ctx, SERIES.expense.rgb, context.dataIndex === inProgressIndex ? 0.45 : 0.9, 'up'),
         hoverBackgroundColor: SERIES.expense.hex,
         borderRadius: 3,
         borderSkipped: false as const,
@@ -296,7 +346,12 @@ export function MonthlyTrendChart({
       {/* 범례: 색 외에 패턴/선 형태로도 구분 */}
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: SERIES.income.hex }} />
+          <span
+            className="h-2.5 w-2.5 rounded-sm"
+            style={{
+              backgroundImage: `repeating-linear-gradient(-45deg, ${SERIES.income.hex} 0 2px, rgba(255,255,255,0.6) 2px 3px)`,
+            }}
+          />
           {t('income')}
         </span>
         <span className="inline-flex items-center gap-1.5">
@@ -412,65 +467,86 @@ export function MonthlyTrendChart({
       </div>
 
       {/* 누적 저축액: 흐름이 아닌 잔액이므로 x축만 공유하는 별도 스트립 */}
-      <div className="mt-1 h-[120px]">
-        <Line
-          data={stripData}
-          plugins={[bandPlugin, negativeZonePlugin]}
-          role="img"
-          aria-label={t('cumulativeSavings')}
-          options={{
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 300 },
-            layout: { padding: { top: 6, right: PLOT_PADDING_RIGHT } },
-            interaction: { mode: 'index', intersect: false },
-            hover: { mode: 'index', intersect: false },
-            onHover: handleHover,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                ...tooltipStyle,
-                callbacks: {
-                  title: (items) => (items.length ? formatMonthLong(items[0].label, language) : ''),
-                  label: (context) => ` ${context.dataset.label}: ${formatFullKrw(context.parsed.y ?? 0)}`,
-                  footer: (items) => {
-                    const index = items[0]?.dataIndex ?? 0;
-                    const previous = points[index - 1];
-                    if (!previous) return '';
-                    return `${t('momChange')}: ${formatSignedCompactKrw(
-                      points[index].cumulativeSavings - previous.cumulativeSavings,
-                    )}`;
+      <div className="relative mt-1">
+        <div className="h-[120px]">
+          <Line
+            data={stripData}
+            plugins={[bandPlugin, negativeZonePlugin]}
+            role="img"
+            aria-label={t('cumulativeSavings')}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 300 },
+              layout: { padding: { top: 6, right: PLOT_PADDING_RIGHT } },
+              interaction: { mode: 'index', intersect: false },
+              hover: { mode: 'index', intersect: false },
+              onHover: handleHover,
+              plugins: {
+                legend: { display: false },
+                // Rendered as HTML below the strip so it never covers the lines.
+                tooltip: { enabled: false, external: handleStripTooltip },
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { display: false },
+                  border: { display: false },
+                },
+                y: {
+                  afterFit: (scale) => {
+                    scale.width = Y_AXIS_WIDTH;
                   },
+                  // Shared by both strip series, so the ticks stay neutral rather
+                  // than taking either line's colour.
+                  ticks: {
+                    color: axisColor,
+                    font: { size: 10 },
+                    maxTicksLimit: 3,
+                    callback: (value) => formatCompactKrw(Number(value)),
+                  },
+                  grid: {
+                    color: (context) => (context.tick?.value === 0 ? zeroLineColor : 'transparent'),
+                  },
+                  border: { display: false },
                 },
-                footerFont: { weight: 'normal' },
               },
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { display: false },
-                border: { display: false },
-              },
-              y: {
-                afterFit: (scale) => {
-                  scale.width = Y_AXIS_WIDTH;
-                },
-                // Shared by both strip series, so the ticks stay neutral rather
-                // than taking either line's colour.
-                ticks: {
-                  color: axisColor,
-                  font: { size: 10 },
-                  maxTicksLimit: 3,
-                  callback: (value) => formatCompactKrw(Number(value)),
-                },
-                grid: {
-                  color: (context) => (context.tick?.value === 0 ? zeroLineColor : 'transparent'),
-                },
-                border: { display: false },
-              },
-            },
-          }}
-        />
+            }}
+          />
+        </div>
+
+        {stripTooltip && stripPoint && (
+          <div
+            className="pointer-events-none absolute top-full z-40 w-max max-w-[220px] -translate-x-1/2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-elevate dark:border-gray-700 dark:bg-gray-800 dark:shadow-elevate-dark"
+            style={{ left: stripTooltip.x }}
+            aria-hidden="true"
+          >
+            <p className="font-semibold text-gray-900 dark:text-gray-100">
+              {formatMonthLong(stripPoint.month, language)}
+            </p>
+            <p className="mt-1 flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+              <span className="h-0.5 w-3 rounded-full" style={{ backgroundColor: SERIES.savings.hex }} />
+              {t('cumulativeSavings')}
+              <span className="ml-auto pl-2 font-medium tabular-nums">{formatFullKrw(stripPoint.cumulativeSavings)}</span>
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+              <span
+                className="h-0.5 w-3"
+                style={{
+                  backgroundImage: `repeating-linear-gradient(90deg, ${SERIES.fixed.hex} 0 4px, transparent 4px 6px)`,
+                }}
+              />
+              {t('fixedCost')}
+              <span className="ml-auto pl-2 font-medium tabular-nums">{formatFullKrw(stripPoint.fixedCost)}</span>
+            </p>
+            {stripPrevious && (
+              <p className="mt-1 border-t border-gray-100 pt-1 text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                {t('momChange')}:{' '}
+                {formatSignedCompactKrw(stripPoint.cumulativeSavings - stripPrevious.cumulativeSavings)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 스크린 리더용 대체 표 */}
