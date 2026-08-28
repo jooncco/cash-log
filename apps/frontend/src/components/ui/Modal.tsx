@@ -7,6 +7,8 @@ interface Props {
   title: string;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  /** Pinned below the scrolling body, so actions never scroll out of reach. */
+  footer?: ReactNode;
 }
 
 const sizeClass: Record<NonNullable<Props['size']>, string> = {
@@ -15,7 +17,7 @@ const sizeClass: Record<NonNullable<Props['size']>, string> = {
   lg: 'max-w-2xl',
 };
 
-export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
+export function Modal({ open, onClose, title, children, size = 'md', footer }: Props) {
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -38,24 +40,29 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
       data-testid="modal-overlay"
     >
       <div
-        className={`w-full ${sizeClass[size]} max-h-[90vh] overflow-y-auto rounded-xl2 border border-gray-200/80 bg-white p-6 shadow-elevate-lg animate-scale-in dark:border-gray-800 dark:bg-gray-900 dark:shadow-elevate-lg-dark`}
+        className={`flex w-full ${sizeClass[size]} max-h-[90vh] flex-col overflow-hidden rounded-xl2 border border-gray-200/80 bg-white shadow-elevate-lg animate-scale-in dark:border-gray-800 dark:bg-gray-900 dark:shadow-elevate-lg-dark`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label={title}
       >
-        <div className="mb-5 flex items-center justify-between">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200/70 px-6 py-4 dark:border-gray-800">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             data-testid="modal-close"
             aria-label="Close"
           >
             <X size={20} />
           </button>
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        {footer && (
+          <div className="shrink-0 border-t border-gray-200/70 bg-gray-50/60 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/60">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
