@@ -83,7 +83,7 @@ const lastThree = eightMonths.slice(-3);
 
 describe('createNetBadgePlugin', () => {
   it('draws one badge per point, centred on its category', () => {
-    let state = stateFor(lastThree);
+    const state = stateFor(lastThree);
     const plugin = createNetBadgePlugin(() => state);
     const { chart, texts } = fakeChart(lastThree.length);
 
